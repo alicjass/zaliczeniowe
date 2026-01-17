@@ -5,24 +5,19 @@ PLEC_OSOBA = models.IntegerChoices(
     'Mezczyzna Kobieta Inna'
 )
 
-TYP_OSOBA = models.IntegerChoices(
-    'TypOsoba',
-    'Admin Weterynarz Opiekun'
-)
-
 STATUS_AKTYWNOSC = models.IntegerChoices(
     'StatusAktywnosc',
     'Aktywny Nieaktywny'
 )
 
-PLEC_ZWIERZE = models.IntegerChoices(
-    'PlecZwierze',
-    'Samiec Samica'
-)
-
 GATUNEK = models.IntegerChoices(
     'Gatunek',
     'Pies Kot'
+)
+
+PLEC_ZWIERZE = models.IntegerChoices(
+    'PlecZwierze',
+    'Samiec Samica'
 )
 
 STATUS_WIZYTA = models.IntegerChoices(
@@ -31,16 +26,16 @@ STATUS_WIZYTA = models.IntegerChoices(
 )
 
 
-class Osoba(models.Model):
+class Opiekun(models.Model):
     imie = models.CharField(max_length = 50)
     nazwisko = models.CharField(max_length = 100)
-    plec = models.IntegerField(choices = PLEC_OSOBA.choices, default = PLEC_OSOBA.Inna)
-    typ = models.IntegerField(choices = TYP_OSOBA.choices)
+    plec = models.IntegerField(choices = PLEC_OSOBA.choices)
+    
     status = models.IntegerField(choices = STATUS_AKTYWNOSC.choices, default = STATUS_AKTYWNOSC.Aktywny)
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
     def __str__(self):
-        return f"Osoba: {self.imie} {self.nazwisko}, ({self.get_typ_display()})"
+        return f"{self.imie} {self.nazwisko}"
     
     class Meta:
         ordering = ['nazwisko', 'imie']
@@ -48,42 +43,59 @@ class Osoba(models.Model):
 
 class Zwierze(models.Model):
     imie = models.CharField(max_length = 50)
-    opiekun = models.ForeignKey(Osoba, on_delete = models.PROTECT, limit_choices_to={'typ': TYP_OSOBA.Opiekun})
+    opiekun = models.ForeignKey(Opiekun, on_delete = models.PROTECT)
     gatunek = models.IntegerField(choices = GATUNEK.choices)
     plec = models.IntegerField(choices = PLEC_ZWIERZE.choices)
     data_urodzenia = models.DateField(blank = True, null = True)  # warunek: nie moze byc z przyszlosci!
+
     status = models.IntegerField(choices = STATUS_AKTYWNOSC.choices, default = STATUS_AKTYWNOSC.Aktywny)
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
     def __str__(self):
-        return f"Zwierzę: {self.imie} ({self.opiekun.nazwisko}, {self.get_gatunek_display()})"
+        return f"{self.imie} {self.opiekun.nazwisko} ({self.get_gatunek_display()})"
 
     class Meta:
-        ordering = ['gatunek', 'imie']
+        ordering = ['opiekun__nazwisko', 'gatunek', 'imie']
 
 
-class Wizyta(models.Model):
-    zwierze = models.ForeignKey(Zwierze, on_delete = models.PROTECT)
-    weterynarz = models.ForeignKey(Osoba, on_delete = models.PROTECT, limit_choices_to={'typ': TYP_OSOBA.Weterynarz})
-    data_wizyty = models.DateTimeField()  # warunek: nie mozna umowic wizyty na date z przeszlosci + nie mozna zmienic wizyty odbytej
-    status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
-    notatka = models.TextField(blank = True, null = True)
+class Weterynarz(models.Model):
+    imie = models.CharField(max_length = 50)
+    nazwisko = models.CharField(max_length = 100)
+    plec = models.IntegerField(choices = PLEC_OSOBA.choices)
+    specjalizacja = models.CharField(max_length=100, blank=True)
+    
+    status = models.IntegerField(choices = STATUS_AKTYWNOSC.choices, default = STATUS_AKTYWNOSC.Aktywny)
+    data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
     def __str__(self):
-        return f"Wizyta: {self.zwierze.imie} ({self.data_wizyty}, lek. wet. {self.weterynarz.nazwisko})"
-
+        return f"{self.imie} {self.nazwisko}"
+    
     class Meta:
-        ordering = ['data_wizyty']
+        ordering = ['nazwisko', 'imie']
 
 
 class DostepnoscWeterynarza(models.Model):
-    weterynarz = models.ForeignKey(Osoba, on_delete = models.PROTECT, limit_choices_to={'typ': TYP_OSOBA.Weterynarz})
+    weterynarz = models.ForeignKey(Weterynarz, on_delete = models.CASCADE)
     data = models.DateField()
     godz_od = models.TimeField() # warunek: godz_od < godz_do
     godz_do = models.TimeField()
 
     def __str__(self):
-        return f"Dostępność lek. wet. {self.weterynarz.nazwisko}: {self.data} {self.godz_od} - {self.godz_do}"
+        return f"lek. wet. {self.weterynarz.nazwisko}: {self.data} {self.godz_od.strftime('%H:%M')}-{self.godz_do.strftime('%H:%M')}"
 
     class Meta:
-        ordering = ['data']
+        ordering = ['data', 'godz_od']
+
+
+class Wizyta(models.Model):
+    zwierze = models.ForeignKey(Zwierze, on_delete = models.CASCADE)
+    weterynarz = models.ForeignKey(Weterynarz, on_delete = models.PROTECT)
+    data_wizyty = models.DateTimeField()  # warunek: nie mozna umowic wizyty na date z przeszlosci + nie mozna zmienic wizyty odbytej
+    status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
+    notatka = models.TextField(blank = True)
+
+    def __str__(self):
+        return f"{self.zwierze.imie} {self.zwierze.opiekun.nazwisko}: {self.data_wizyty.strftime('%Y-%m-%d %H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
+
+    class Meta:
+        ordering = ['data_wizyty']
