@@ -38,6 +38,7 @@ class Opiekun(models.Model):
         return f"{self.imie} {self.nazwisko}"
     
     class Meta:
+        verbose_name_plural = "Opiekunowie"
         ordering = ['nazwisko', 'imie']
 
 
@@ -46,7 +47,7 @@ class Zwierze(models.Model):
     opiekun = models.ForeignKey(Opiekun, on_delete = models.PROTECT)
     gatunek = models.IntegerField(choices = GATUNEK.choices)
     plec = models.IntegerField(choices = PLEC_ZWIERZE.choices)
-    data_urodzenia = models.DateField(blank = True, null = True)  # warunek: nie moze byc z przyszlosci!
+    data_urodzenia = models.DateField(blank = True, null = True)
 
     status = models.IntegerField(choices = STATUS_AKTYWNOSC.choices, default = STATUS_AKTYWNOSC.Aktywny)
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
@@ -55,6 +56,7 @@ class Zwierze(models.Model):
         return f"{self.imie} {self.opiekun.nazwisko} ({self.get_gatunek_display()})"
 
     class Meta:
+        verbose_name_plural = "Zwierzeta"
         ordering = ['opiekun__nazwisko', 'gatunek', 'imie']
 
 
@@ -71,26 +73,28 @@ class Weterynarz(models.Model):
         return f"{self.imie} {self.nazwisko}"
     
     class Meta:
+        verbose_name_plural = "Weterynarze"
         ordering = ['nazwisko', 'imie']
 
 
-class DostepnoscWeterynarza(models.Model):
+class GrafikDostepnosci(models.Model):
     weterynarz = models.ForeignKey(Weterynarz, on_delete = models.CASCADE)
     data = models.DateField()
-    godz_od = models.TimeField() # warunek: godz_od < godz_do
+    godz_od = models.TimeField()
     godz_do = models.TimeField()
 
     def __str__(self):
         return f"lek. wet. {self.weterynarz.nazwisko}: {self.data} {self.godz_od.strftime('%H:%M')}-{self.godz_do.strftime('%H:%M')}"
 
     class Meta:
+        verbose_name_plural = "Grafiki dostepnosci"
         ordering = ['data', 'godz_od']
 
 
 class Wizyta(models.Model):
     zwierze = models.ForeignKey(Zwierze, on_delete = models.CASCADE)
     weterynarz = models.ForeignKey(Weterynarz, on_delete = models.PROTECT)
-    data_wizyty = models.DateTimeField()  # warunek: nie mozna umowic wizyty na date z przeszlosci + nie mozna zmienic wizyty odbytej
+    data_wizyty = models.DateTimeField()  # warunek: weterynarz jest dostepny (grafik dostepnosci + inne wizyty)
     status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
     notatka = models.TextField(blank = True)
 
@@ -98,4 +102,5 @@ class Wizyta(models.Model):
         return f"{self.zwierze.imie} {self.zwierze.opiekun.nazwisko}: {self.data_wizyty.strftime('%Y-%m-%d %H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
 
     class Meta:
+        verbose_name_plural = "Wizyty"
         ordering = ['data_wizyty']
