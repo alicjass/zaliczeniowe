@@ -7,14 +7,14 @@ class OpiekunSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_imie(self, value):
-        if not (value[0].isupper() and value.isalpcha()):
+        if not (value[0].isupper() and value.isalpha()):
             raise serializers.ValidationError(
                 "Imię powinno zawierać tylko litery i rozpoczynać się wielką literą!"
                 )
         return value
 
     def validate_nazwisko(self, value):
-        if not (value[0].isupper() and value.isalpcha()):
+        if not (value[0].isupper() and value.isalpha()):
             raise serializers.ValidationError(
                 "Nazwisko powinno zawierać tylko litery i rozpoczynać się wielką literą!"
                 )
@@ -27,7 +27,7 @@ class ZwierzeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_imie(self, value):
-        if not (value[0].isupper() and value.isalpcha()):
+        if not (value[0].isupper() and value.isalpha()):
             raise serializers.ValidationError(
                 "Imię powinno zawierać tylko litery i rozpoczynać się wielką literą!"
                 )
@@ -45,14 +45,14 @@ class WeterynarzSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_imie(self, value):
-        if not (value[0].isupper() and value.isalpcha()):
+        if not (value[0].isupper() and value.isalpha()):
             raise serializers.ValidationError(
                 "Imię powinno zawierać tylko litery i rozpoczynać się wielką literą!"
                 )
         return value
 
     def validate_nazwisko(self, value):
-        if not (value[0].isupper() and value.isalpcha()):
+        if not (value[0].isupper() and value.isalpha()):
             raise serializers.ValidationError(
                 "Nazwisko powinno zawierać tylko litery i rozpoczynać się wielką literą!"
                 )
@@ -65,6 +65,9 @@ class GrafikDostepnosciSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate(self, data):
+        if data['data'] < date.today():
+            raise serializers.ValidationError("Data nie może być z przeszłości.")
+        
         if data['godz_od'] >= data['godz_do']:
             raise serializers.ValidationError("Godzina rozpoczęcia nie może być późniejsza niż godzina zakończenia.")
         return data
@@ -75,7 +78,7 @@ class WizytaSerializer(serializers.ModelSerializer):
         model = Wizyta
         fields = '__all__'
 
-    def validate_data_wizyty(self, value):
-        if value.date() < date.today():
+    def validate_termin_wizyty(self, value):
+        if value < datetime.now():
             raise serializers.ValidationError("Nie można umówić wizyty na datę z przeszłości.")
         return value

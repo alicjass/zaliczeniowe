@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 PLEC_OSOBA = models.IntegerChoices(
     'PlecOsoba',
@@ -94,13 +95,13 @@ class GrafikDostepnosci(models.Model):
 class Wizyta(models.Model):
     zwierze = models.ForeignKey(Zwierze, on_delete = models.CASCADE)
     weterynarz = models.ForeignKey(Weterynarz, on_delete = models.PROTECT)
-    data_wizyty = models.DateTimeField()  # warunek: weterynarz jest dostepny (grafik dostepnosci + inne wizyty)
+    termin_wizyty = models.DateTimeField()  # warunek: weterynarz jest dostepny (grafik dostepnosci + inne wizyty)
     status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
     notatka = models.TextField(blank = True)
 
     def __str__(self):
-        return f"{self.zwierze.imie} {self.zwierze.opiekun.nazwisko}: {self.data_wizyty.strftime('%Y-%m-%d %H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
+        return f"{self.zwierze.imie} {self.zwierze.opiekun.nazwisko}: {self.termin_wizyty.strftime('%Y-%m-%d %H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
 
     class Meta:
         verbose_name_plural = "Wizyty"
-        ordering = ['data_wizyty']
+        ordering = ['termin_wizyty']
