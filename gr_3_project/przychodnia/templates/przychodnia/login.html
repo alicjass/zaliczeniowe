@@ -1,0 +1,16 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Logowanie{% endblock %}
+
+{% block content %}
+<h2>Logowanie</h2>
+{% if error %}
+    <p style="color:red;">{{ error }}</p>
+{% endif %}
+<form method="post" action="{% url 'user-login' %}">
+    {% csrf_token %}
+    <p>Login: <input type="text" name="username"></p>
+    <p>Hasło: <input type="password" name="password"></p>
+    <p><input type="submit" value="Zaloguj"></p>
+</form>
+{% endblock %}

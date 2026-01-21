@@ -28,6 +28,8 @@ STATUS_WIZYTA = models.IntegerChoices(
 
 
 class Opiekun(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # polaczenie profilu opiekuna z kontem uzytkownika User
+
     imie = models.CharField(max_length = 50)
     nazwisko = models.CharField(max_length = 100)
     plec = models.IntegerField(choices = PLEC_OSOBA.choices)
@@ -62,6 +64,8 @@ class Zwierze(models.Model):
 
 
 class Weterynarz(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # polaczenie profilu weterynarza z kontem uzytkownika User
+
     imie = models.CharField(max_length = 50)
     nazwisko = models.CharField(max_length = 100)
     plec = models.IntegerField(choices = PLEC_OSOBA.choices)

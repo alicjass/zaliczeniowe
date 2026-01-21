@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{% block title %}{% endblock %}</title>
+        <link href="{% static "css/przychodnia.css" %}" rel="stylesheet">
+    </head>
+    <body>
+        <div id="header" >
+            Przychodnia weterynaryjna
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'user-logout' %}">Wyloguj</a>
+            {% else %}
+                <a href="{% url 'user-login' %}">Zaloguj</a>
+            {% endif %}
+        </div>
+        <hr/>
+        <div id="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+        <div id="sidebar">
+            <p>Panel boczny</p>
+        </div>
+    </body>
+</html>
