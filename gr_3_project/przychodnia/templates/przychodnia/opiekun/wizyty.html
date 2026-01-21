@@ -1,0 +1,25 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Twoje wizyty{% endblock %}
+
+{% block content %}
+<h2>Twoje wizyty:</h2>
+{% if wizyty %}
+<table border="1">
+    <tr>
+        <th>Termin</th>
+        <th>Dane zwierzaka</th>
+        <th>Weterynarz</th>
+    </tr>
+    {% for wizyta in wizyty %}
+    <tr>
+        <td>{{ wizyta.termin_wizyty|date:"d.m.Y H:i" }}</td>
+        <td>{{ wizyta.zwierze.imie }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
+        <td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+    <p>Nie masz zaplanowanych wizyt.</p>
+{% endif %}
+{% endblock %}

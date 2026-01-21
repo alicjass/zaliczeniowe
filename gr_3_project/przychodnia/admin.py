@@ -2,8 +2,16 @@ from django.contrib import admin
 
 from .models import Opiekun, Zwierze, Weterynarz, GrafikDostepnosci, Wizyta
 
-admin.site.register(Opiekun)
+@admin.register(Weterynarz)
+class WeterynarzAdmin(admin.ModelAdmin):
+    list_display = ('user', 'imie', 'nazwisko')
+    search_fields = ('user__drkowalski',)
+
+@admin.register(Opiekun)
+class OpiekunAdmin(admin.ModelAdmin):
+    list_display = ('user', 'imie', 'nazwisko')
+    search_fields = ('user__anna',)
+
 admin.site.register(Zwierze)
-admin.site.register(Weterynarz)
 admin.site.register(GrafikDostepnosci)
 admin.site.register(Wizyta)

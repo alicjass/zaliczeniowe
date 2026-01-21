@@ -89,7 +89,7 @@ class GrafikDostepnosci(models.Model):
     godz_do = models.TimeField()
 
     def __str__(self):
-        return f"lek. wet. {self.weterynarz.nazwisko}: {self.data} {self.godz_od.strftime('%H:%M')}-{self.godz_do.strftime('%H:%M')}"
+        return f"lek. wet. {self.weterynarz.nazwisko}: {self.data.strftime('%d.%m.%Y')} {self.godz_od.strftime('%H:%M')}-{self.godz_do.strftime('%H:%M')}"
 
     class Meta:
         verbose_name_plural = "Grafiki dostepnosci"
@@ -104,7 +104,7 @@ class Wizyta(models.Model):
     notatka = models.TextField(blank = True)
 
     def __str__(self):
-        return f"{self.zwierze.imie} {self.zwierze.opiekun.nazwisko}: {self.termin_wizyty.strftime('%Y-%m-%d %H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
+        return f"{self.zwierze.imie} {self.zwierze.opiekun.nazwisko}: {self.termin_wizyty.strftime('%d.%m.%Y %H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
 
     class Meta:
         verbose_name_plural = "Wizyty"

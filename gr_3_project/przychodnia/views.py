@@ -3,6 +3,7 @@ from django.http import HttpResponse
 import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from .models import Wizyta
 
 def welcome_view(request):
     now = datetime.datetime.now()
@@ -28,10 +29,10 @@ def user_login(request):
                 return redirect('/admin/')
 
             elif hasattr(user, 'weterynarz'):
-                return redirect('welcome-view')
+                return redirect('weterynarz-wizyty')
 
             elif hasattr(user, 'opiekun'):
-                return redirect('welcome-view')
+                return redirect('opiekun-wizyty')
 
             else:
                 return redirect('welcome-view')
@@ -63,3 +64,14 @@ def drf_token_login(request):
 def drf_token_logout(request):
     request.session.flush()
     return redirect('drf-token-login')
+
+# LISTA WIZYT DLA WETERYNARZA I OPIEKUNA
+@login_required
+def weterynarz_wizyty(request):
+    wizyty = Wizyta.objects.filter(weterynarz__user=request.user)
+    return render(request, 'przychodnia/weterynarz/wizyty.html', {'wizyty': wizyty})
+
+@login_required
+def opiekun_wizyty(request):
+    wizyty = Wizyta.objects.filter(zwierze__opiekun__user=request.user)
+    return render(request, 'przychodnia/opiekun/wizyty.html', {'wizyty': wizyty})
