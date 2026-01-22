@@ -14,7 +14,7 @@
     <tr>
         <td>
             <a href="{% url 'wizyta-detail' pk=wizyta.pk %}">
-                {{ wizyta.termin_wizyty|date:"d.m.Y H:i" }}
+                {{ wizyta.data_wizyty|date:"d.m.Y" }} {{ wizyta.godzina_wizyty|time:"H:i" }}
             </a>
         </td>
         <td>{{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})</td>

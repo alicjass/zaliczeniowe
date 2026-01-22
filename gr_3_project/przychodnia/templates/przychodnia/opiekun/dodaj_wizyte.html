@@ -1,0 +1,14 @@
+{% extends "przychodnia\base.html" %}
+
+{% block title %}Dodaj wizytę{% endblock %}
+
+{% block content %}
+<h1>Dodaj wizytę:</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Zapisz</button>
+</form>
+<hr>
+{% endblock %}

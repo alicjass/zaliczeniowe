@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .models import Opiekun, Weterynarz, Wizyta
+from .forms import WizytaForm
 import datetime
 
 
@@ -93,3 +94,19 @@ def wizyta_detail(request, pk):
             'wizyta': wizyta,
             'back_url': back_url
         })
+
+# DODAWANIE WIZYTY PRZEZ OPIEKUNA
+@login_required
+def dodaj_wizyte(request):
+    if not hasattr(request.user, 'opiekun'):
+        return HttpResponse("Brak dostępu", status=403)
+
+    if request.method == "POST":
+        form = WizytaForm(request.POST, opiekun=request.user.opiekun)
+        if form.is_valid():
+            wizyta = form.save()
+            return redirect('opiekun-wizyty')
+    else:
+        form = WizytaForm(opiekun=request.user.opiekun)
+
+    return render(request, 'przychodnia/opiekun/dodaj_wizyte.html', {'form': form})

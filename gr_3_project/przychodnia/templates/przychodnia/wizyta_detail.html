@@ -4,7 +4,7 @@
 
 {% block content %}
 <h2>Szczegóły wizyty:</h2>
-<p><strong>Termin:</strong> {{ wizyta.termin_wizyty|date:"d.m.Y H:i" }}</p>
+<p><strong>Termin:</strong> {{ wizyta.data_wizyty|date:"d.m.Y" }} {{ wizyta.godzina_wizyty|time:"H:i" }}</p>
 <p><strong>Zwierzę:</strong> {{ wizyta.zwierze.imie }}</p>
 
 {% if not request.user.opiekun %}
