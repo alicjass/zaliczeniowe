@@ -5,12 +5,12 @@ from .models import Opiekun, Zwierze, Weterynarz, GrafikDostepnosci, Wizyta
 @admin.register(Opiekun)
 class OpiekunAdmin(admin.ModelAdmin):
     list_display = ('user', 'imie', 'nazwisko')
-    search_fields = ('user__anna',)
+    search_fields = ('user__username',)
 
 @admin.register(Weterynarz)
 class WeterynarzAdmin(admin.ModelAdmin):
     list_display = ('user', 'imie', 'nazwisko')
-    search_fields = ('user__drkowalski',)
+    search_fields = ('user__username',)
 
 admin.site.register(Zwierze)
 admin.site.register(GrafikDostepnosci)

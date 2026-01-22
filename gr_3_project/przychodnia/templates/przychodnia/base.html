@@ -8,10 +8,10 @@
     <body>
         <div id="header" >
             Przychodnia weterynaryjna
-            {% if request.user.is_authenticated %}
+            {% if user.is_authenticated %}
                 <a href="{% url 'user-logout' %}">Wyloguj</a>
             {% else %}
-                <a href="{% url 'user-login' %}"></a>
+                <a href="{% url 'user-login' %}">Zaloguj</a>
             {% endif %}
         </div>
         <hr/>

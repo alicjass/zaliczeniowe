@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-import datetime
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import Wizyta
+from .models import Opiekun, Weterynarz, Wizyta
+import datetime
 
+
+# WELCOME VIEW
 def welcome_view(request):
     now = datetime.datetime.now()
     html = f"""
@@ -15,7 +18,7 @@ def welcome_view(request):
     return HttpResponse(html)
 
 
-# LOGOWANIE I WYLOGOWANIE UŻYTKOWNIKA
+# LOGOWANIE/WYLOGOWANIE UŻYTKOWNIKA
 def user_login(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -37,7 +40,6 @@ def user_login(request):
             else:
                 return redirect('welcome-view')
 
-            return redirect('welcome-view')
         else:
             return render(request, 'przychodnia/login.html', {'error': 'Nieprawidłowe dane'})
     return render(request, 'przychodnia/login.html')
@@ -47,31 +49,47 @@ def user_logout(request):
     return redirect('user-login')
 
 
-def drf_token_login(request):
-    if request.method == "POST":
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(username=username, password=password)
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-            request.session['token'] = token.key
-            request.session['user_id'] = user.id
-            return redirect('welcome-view')
-        else:
-            return render(request, 'przychodnia/login.html', {'error': 'Nieprawidłowe dane'})
-    return render(request, 'przychodnia/login.html')
-
-def drf_token_logout(request):
-    request.session.flush()
-    return redirect('drf-token-login')
-
-# LISTA WIZYT DLA WETERYNARZA I OPIEKUNA
-@login_required
-def weterynarz_wizyty(request):
-    wizyty = Wizyta.objects.filter(weterynarz__user=request.user)
-    return render(request, 'przychodnia/weterynarz/wizyty.html', {'wizyty': wizyty})
-
+# LISTA WIZYT DLA OPIEKUNA
 @login_required
 def opiekun_wizyty(request):
     wizyty = Wizyta.objects.filter(zwierze__opiekun__user=request.user)
+    if not hasattr(request.user, "opiekun"):
+        return HttpResponseForbidden()
     return render(request, 'przychodnia/opiekun/wizyty.html', {'wizyty': wizyty})
+
+# LISTA WIZYT DLA WETERYNARZA
+@login_required
+def weterynarz_wizyty(request):
+    wizyty = Wizyta.objects.filter(weterynarz__user=request.user)
+    if not hasattr(request.user, "weterynarz"):
+        return HttpResponseForbidden()
+    return render(request, 'przychodnia/weterynarz/wizyty.html', {'wizyty': wizyty})
+
+
+# SZCZEGÓŁY WIZYTY
+@login_required
+def wizyta_detail(request, pk):
+    try:
+        wizyta = Wizyta.objects.get(id=pk)
+    except Wizyta.DoesNotExist:
+        return HttpResponse("Wizyta nie istnieje", status=404)
+
+    if hasattr(request.user, 'opiekun'):
+        if wizyta.zwierze.opiekun != request.user.opiekun:
+            return HttpResponse("Brak dostępu", status=403)
+
+        back_url = reverse('opiekun-wizyty')
+
+    elif hasattr(request.user, 'weterynarz'):
+        if wizyta.weterynarz != request.user.weterynarz:
+            return HttpResponse("Brak dostępu", status=403)
+
+        back_url = reverse('weterynarz-wizyty')
+
+    else:
+        return HttpResponse("Brak roli użytkownika", status=403)
+
+    return render(request, 'przychodnia/wizyta_detail.html',{
+            'wizyta': wizyta,
+            'back_url': back_url
+        })

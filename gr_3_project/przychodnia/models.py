@@ -6,11 +6,6 @@ PLEC_OSOBA = models.IntegerChoices(
     'Mezczyzna Kobieta Inna'
 )
 
-STATUS_AKTYWNOSC = models.IntegerChoices(
-    'StatusAktywnosc',
-    'Aktywny Nieaktywny'
-)
-
 GATUNEK = models.IntegerChoices(
     'Gatunek',
     'Pies Kot'
@@ -23,7 +18,7 @@ PLEC_ZWIERZE = models.IntegerChoices(
 
 STATUS_WIZYTA = models.IntegerChoices(
     'StatusWizyta',
-    'Zaplanowana Otwarta Zrealizowana Odwolana Nieodwolana'
+    'Zaplanowana Zrealizowana Odwolana'
 )
 
 
@@ -34,7 +29,6 @@ class Opiekun(models.Model):
     nazwisko = models.CharField(max_length = 100)
     plec = models.IntegerField(choices = PLEC_OSOBA.choices)
     
-    status = models.IntegerField(choices = STATUS_AKTYWNOSC.choices, default = STATUS_AKTYWNOSC.Aktywny)
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
     def __str__(self):
@@ -52,7 +46,6 @@ class Zwierze(models.Model):
     plec = models.IntegerField(choices = PLEC_ZWIERZE.choices)
     data_urodzenia = models.DateField(blank = True, null = True)
 
-    status = models.IntegerField(choices = STATUS_AKTYWNOSC.choices, default = STATUS_AKTYWNOSC.Aktywny)
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
     def __str__(self):
@@ -71,7 +64,6 @@ class Weterynarz(models.Model):
     plec = models.IntegerField(choices = PLEC_OSOBA.choices)
     specjalizacja = models.CharField(max_length=100, blank=True)
     
-    status = models.IntegerField(choices = STATUS_AKTYWNOSC.choices, default = STATUS_AKTYWNOSC.Aktywny)
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
     def __str__(self):

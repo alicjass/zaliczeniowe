@@ -1,0 +1,21 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Szczegóły wizyty{% endblock %}
+
+{% block content %}
+<h2>Szczegóły wizyty:</h2>
+<p><strong>Termin:</strong> {{ wizyta.termin_wizyty|date:"d.m.Y H:i" }}</p>
+<p><strong>Zwierzę:</strong> {{ wizyta.zwierze.imie }}</p>
+
+{% if not request.user.opiekun %}
+<p><strong>Opiekun:</strong> {{ wizyta.zwierze.opiekun }}</p>
+{% endif %}
+
+{% if not request.user.weterynarz %}
+<p><strong>Weterynarz:</strong> {{ wizyta.weterynarz }} </p>
+{% endif %}
+
+<p><strong>Status:</strong> {{ wizyta.get_status_display }}</p>
+<p><strong>Notatka:</strong> {{ wizyta.notatka }}</p>
+<a href="{{ back_url }}">Powrót do listy wizyt</a>
+{% endblock %}
