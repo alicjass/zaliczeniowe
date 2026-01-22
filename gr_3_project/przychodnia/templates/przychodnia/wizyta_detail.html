@@ -17,7 +17,18 @@
 
 <p><strong>Status:</strong> {{ wizyta.get_status_display }}</p>
 <p><strong>Notatka:</strong> {{ wizyta.notatka }}</p>
-{% if user.opiekun and wizyta.status == 1 %}
+
+{% if user.weterynarz and wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
+    <form method="post" action="{% url 'zrealizuj-wizyte' pk=wizyta.pk %}">
+        {% csrf_token %}
+        <button type="submit"
+                style="background-color: green; color: white;">
+            Oznacz jako zrealizowaną
+        </button>
+    </form>
+{% endif %}
+
+{% if user.opiekun and wizyta.zwierze.opiekun == user.opiekun and wizyta.status == 1 %}
     <hr>
     <form action="{% url 'odwolaj-wizyte' pk=wizyta.pk %}" method="get">
         <button type="submit"

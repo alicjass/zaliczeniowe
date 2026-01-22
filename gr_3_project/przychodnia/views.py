@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .models import Opiekun, Weterynarz, Wizyta, STATUS_WIZYTA
 from .forms import WizytaForm
-import datetime
+from datetime import date, datetime
 
 
 # WELCOME VIEW
@@ -88,6 +88,7 @@ def wizyta_detail(request, pk):
 
     return render(request, 'przychodnia/wizyta_detail.html',{'wizyta': wizyta})
 
+
 # DODAWANIE WIZYTY PRZEZ OPIEKUNA
 @login_required
 def dodaj_wizyte(request):
@@ -117,7 +118,10 @@ def odwolaj_wizyte(request, pk):
         return HttpResponse("Brak dostępu", status=403)
 
     if wizyta.status != STATUS_WIZYTA.Zaplanowana:
-        return HttpResponseForbidden("Tej wizyty nie można odwołać.")
+        return HttpResponseForbidden("Ta wizyta już się odbyła lub została odwołana.")
+
+    if datetime.combine(wizyta.data_wizyty, wizyta.godzina_wizyty) <= datetime.now():
+        return HttpResponseForbidden("Nie można odwołać wizyty, która już się rozpoczęła lub minęła.")
 
     if request.method == "POST":
         wizyta.status = STATUS_WIZYTA.Odwołana
@@ -125,3 +129,28 @@ def odwolaj_wizyte(request, pk):
         return redirect("opiekun-wizyty")
 
     return render(request, 'przychodnia/odwolaj_wizyte.html', {'wizyta': wizyta})
+
+
+# REALIZACJA WIZYTY PRZEZ WETERYNARZA
+@login_required
+def zrealizuj_wizyte(request, pk):
+    try:
+        wizyta = Wizyta.objects.get(id=pk)
+    except Wizyta.DoesNotExist:
+        return HttpResponse("Wizyta nie istnieje", status=404)
+
+    if not hasattr(request.user, 'weterynarz') or wizyta.weterynarz != request.user.weterynarz:
+        return HttpResponse("Brak dostępu", status=403)
+
+    if wizyta.status != STATUS_WIZYTA.Zaplanowana:
+        return HttpResponseForbidden("Ta wizyta już się odbyła lub została odwołana.")
+
+    if wizyta.data_wizyty != date.today():
+        return HttpResponseForbidden("Można realizować tylko wizyty z dzisiejszego dnia.")
+
+    if request.method == "POST":
+        wizyta.status = STATUS_WIZYTA.Zrealizowana
+        wizyta.save()
+        return redirect("weterynarz-wizyty")
+
+    return render(request, 'przychodnia/zrealizuj_wizyte.html', {'wizyta': wizyta})
