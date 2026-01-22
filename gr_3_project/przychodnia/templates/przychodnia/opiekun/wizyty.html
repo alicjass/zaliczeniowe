@@ -10,6 +10,7 @@
         <th>Termin</th>
         <th>Dane zwierzaka</th>
         <th>Weterynarz</th>
+        <th>Status</th>
     </tr>
     {% for wizyta in wizyty %}
     <tr>
@@ -20,6 +21,16 @@
         </td>
         <td>{{ wizyta.zwierze.imie }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
         <td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>
+        <td>
+            <span class="
+                {% if wizyta.status == 1 %}status-1
+                {% elif wizyta.status == 2 %}status-2
+                {% elif wizyta.status == 3 %}status-3
+                {% endif %}
+            ">
+            {{ wizyta.get_status_display }}
+            </span>
+        </td>
     </tr>
     {% endfor %}
 </table>

@@ -17,5 +17,13 @@
 
 <p><strong>Status:</strong> {{ wizyta.get_status_display }}</p>
 <p><strong>Notatka:</strong> {{ wizyta.notatka }}</p>
-<a href="{{ back_url }}">Powrót do listy wizyt</a>
+{% if user.opiekun and wizyta.status == 1 %}
+    <hr>
+    <form action="{% url 'odwolaj-wizyte' pk=wizyta.pk %}" method="get">
+        <button type="submit"
+                style="background-color: red; color: white; padding: 6px 12px;">
+            Odwołaj wizytę
+        </button>
+    </form>
+{% endif %}
 {% endblock %}

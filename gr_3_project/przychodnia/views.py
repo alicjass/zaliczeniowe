@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import Opiekun, Weterynarz, Wizyta
+from .models import Opiekun, Weterynarz, Wizyta, STATUS_WIZYTA
 from .forms import WizytaForm
 import datetime
 
@@ -79,21 +79,14 @@ def wizyta_detail(request, pk):
         if wizyta.zwierze.opiekun != request.user.opiekun:
             return HttpResponse("Brak dostępu", status=403)
 
-        back_url = reverse('opiekun-wizyty')
-
     elif hasattr(request.user, 'weterynarz'):
         if wizyta.weterynarz != request.user.weterynarz:
             return HttpResponse("Brak dostępu", status=403)
 
-        back_url = reverse('weterynarz-wizyty')
-
     else:
         return HttpResponse("Brak roli użytkownika", status=403)
 
-    return render(request, 'przychodnia/wizyta_detail.html',{
-            'wizyta': wizyta,
-            'back_url': back_url
-        })
+    return render(request, 'przychodnia/wizyta_detail.html',{'wizyta': wizyta})
 
 # DODAWANIE WIZYTY PRZEZ OPIEKUNA
 @login_required
@@ -110,3 +103,25 @@ def dodaj_wizyte(request):
         form = WizytaForm(opiekun=request.user.opiekun)
 
     return render(request, 'przychodnia/opiekun/dodaj_wizyte.html', {'form': form})
+
+
+# ODWOLYWANIE WIZYTY PRZEZ OPIEKUNA
+@login_required
+def odwolaj_wizyte(request, pk):
+    try:
+        wizyta = Wizyta.objects.get(id=pk)
+    except Wizyta.DoesNotExist:
+        return HttpResponse("Wizyta nie istnieje", status=404)
+
+    if not hasattr(request.user, 'opiekun') or wizyta.zwierze.opiekun != request.user.opiekun:
+        return HttpResponse("Brak dostępu", status=403)
+
+    if wizyta.status != STATUS_WIZYTA.Zaplanowana:
+        return HttpResponseForbidden("Tej wizyty nie można odwołać.")
+
+    if request.method == "POST":
+        wizyta.status = STATUS_WIZYTA.Odwołana
+        wizyta.save()
+        return redirect("opiekun-wizyty")
+
+    return render(request, 'przychodnia/odwolaj_wizyte.html', {'wizyta': wizyta})

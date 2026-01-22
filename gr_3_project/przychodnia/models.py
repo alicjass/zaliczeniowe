@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 PLEC_OSOBA = models.IntegerChoices(
     'PlecOsoba',
-    'Mezczyzna Kobieta Inna'
+    'Mężczyzna Kobieta Inna'
 )
 
 GATUNEK = models.IntegerChoices(
@@ -18,7 +18,7 @@ PLEC_ZWIERZE = models.IntegerChoices(
 
 STATUS_WIZYTA = models.IntegerChoices(
     'StatusWizyta',
-    'Zaplanowana Zrealizowana Odwolana'
+    'Zaplanowana Zrealizowana Odwołana'
 )
 
 
