@@ -101,4 +101,4 @@ class Wizyta(models.Model):
 
     class Meta:
         verbose_name_plural = "Wizyty"
-        ordering = ['data_wizyty', 'godzina_wizyty']
+        ordering = ['data_wizyty', 'godzina_wizyty', 'status']

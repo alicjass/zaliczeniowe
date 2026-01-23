@@ -7,11 +7,11 @@
 <p><strong>Termin:</strong> {{ wizyta.data_wizyty|date:"d.m.Y" }} {{ wizyta.godzina_wizyty|time:"H:i" }}</p>
 <p><strong>Zwierzę:</strong> {{ wizyta.zwierze.imie }}</p>
 
-{% if not request.user.opiekun %}
+{% if user.weterynarz %}
 <p><strong>Opiekun:</strong> {{ wizyta.zwierze.opiekun }}</p>
 {% endif %}
 
-{% if not request.user.weterynarz %}
+{% if user.opiekun %}
 <p><strong>Weterynarz:</strong> {{ wizyta.weterynarz }} </p>
 {% endif %}
 

@@ -9,6 +9,8 @@
     <tr>
         <th>Termin</th>
         <th>Dane zwierzaka</th>
+        {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
+        {% if user.opiekun %}<th>Weterynarz</th>{% endif %}
         <th>Status</th>
     </tr>
     {% for wizyta in wizyty %}
@@ -19,6 +21,8 @@
             </a>
         </td>
         <td>{{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
+        {% if user.weterynarz %}<td>{{ wizyta.zwierze.opiekun.imie }} {{ wizyta.zwierze.opiekun.nazwisko }}</td>{% endif %}
+        {% if user.opiekun %}<td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>{% endif %}
         <td>
             <span class="
                 {% if wizyta.status == 1 %}status-1
@@ -35,4 +39,13 @@
 {% else %}
     <p>Brak przypisanych wizyt.</p>
 {% endif %}
+
+{% if user.opiekun %}
+<p style="margin-top: 20px;">
+    <a href="{% url 'dodaj-wizyte' %}" style="padding: 8px 12px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
+        Dodaj nową wizytę
+    </a>
+</p>
+{% endif %}
+
 {% endblock %}

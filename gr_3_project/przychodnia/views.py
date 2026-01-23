@@ -32,14 +32,8 @@ def user_login(request):
             if user.is_superuser or user.is_staff:
                 return redirect('/admin/')
 
-            elif hasattr(user, 'weterynarz'):
-                return redirect('weterynarz-wizyty')
-
-            elif hasattr(user, 'opiekun'):
-                return redirect('opiekun-wizyty')
-
-            else:
-                return redirect('welcome-view')
+            elif hasattr(user, 'weterynarz') or hasattr(user, 'opiekun'):
+                return redirect('lista-wizyt')
 
         else:
             return render(request, 'przychodnia/login.html', {'error': 'Nieprawidłowe dane'})
@@ -50,21 +44,25 @@ def user_logout(request):
     return redirect('user-login')
 
 
-# LISTA WIZYT DLA OPIEKUNA
+# LISTA WIZYT DLA OPIEKUNA/WETERYNARZA
 @login_required
-def opiekun_wizyty(request):
-    wizyty = Wizyta.objects.filter(zwierze__opiekun__user=request.user)
-    if not hasattr(request.user, "opiekun"):
-        return HttpResponseForbidden()
-    return render(request, 'przychodnia/opiekun/wizyty.html', {'wizyty': wizyty})
+def lista_wizyt(request):
+    user = request.user
 
-# LISTA WIZYT DLA WETERYNARZA
-@login_required
-def weterynarz_wizyty(request):
-    wizyty = Wizyta.objects.filter(weterynarz__user=request.user)
-    if not hasattr(request.user, "weterynarz"):
+    if hasattr(user, "opiekun"):
+        wizyty = Wizyta.objects.filter(
+            zwierze__opiekun=user.opiekun
+        )
+
+    elif hasattr(user, "weterynarz"):
+        wizyty = Wizyta.objects.filter(
+            weterynarz=user.weterynarz
+        )
+
+    else:
         return HttpResponseForbidden()
-    return render(request, 'przychodnia/weterynarz/wizyty.html', {'wizyty': wizyty})
+    
+    return render(request, 'przychodnia/wizyty/lista_wizyt.html', {'wizyty': wizyty})
 
 
 # SZCZEGÓŁY WIZYTY
@@ -86,7 +84,7 @@ def wizyta_detail(request, pk):
     else:
         return HttpResponse("Brak roli użytkownika", status=403)
 
-    return render(request, 'przychodnia/wizyta_detail.html',{'wizyta': wizyta})
+    return render(request, 'przychodnia/wizyty/wizyta_detail.html',{'wizyta': wizyta})
 
 
 # DODAWANIE WIZYTY PRZEZ OPIEKUNA
@@ -99,11 +97,11 @@ def dodaj_wizyte(request):
         form = WizytaForm(request.POST, opiekun=request.user.opiekun)
         if form.is_valid():
             wizyta = form.save()
-            return redirect('opiekun-wizyty')
+            return redirect('lista-wizyt')
     else:
         form = WizytaForm(opiekun=request.user.opiekun)
 
-    return render(request, 'przychodnia/opiekun/dodaj_wizyte.html', {'form': form})
+    return render(request, 'przychodnia/wizyty/dodaj_wizyte.html', {'form': form})
 
 
 # ODWOLYWANIE WIZYTY PRZEZ OPIEKUNA
@@ -126,9 +124,9 @@ def odwolaj_wizyte(request, pk):
     if request.method == "POST":
         wizyta.status = STATUS_WIZYTA.Odwołana
         wizyta.save()
-        return redirect("opiekun-wizyty")
+        return redirect("lista-wizyt")
 
-    return render(request, 'przychodnia/odwolaj_wizyte.html', {'wizyta': wizyta})
+    return render(request, 'przychodnia/wizyty/odwolaj_wizyte.html', {'wizyta': wizyta})
 
 
 # REALIZACJA WIZYTY PRZEZ WETERYNARZA
@@ -151,6 +149,6 @@ def zrealizuj_wizyte(request, pk):
     if request.method == "POST":
         wizyta.status = STATUS_WIZYTA.Zrealizowana
         wizyta.save()
-        return redirect("weterynarz-wizyty")
+        return redirect("lista-wizyt")
 
     return render(request, 'przychodnia/zrealizuj_wizyte.html', {'wizyta': wizyta})
