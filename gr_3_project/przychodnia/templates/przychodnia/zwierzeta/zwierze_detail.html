@@ -1,0 +1,24 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Szczegóły zwierzaka{% endblock %}
+
+{% block content %}
+<h2>Szczegóły zwierzaka:</h2>
+<p><strong>Imię:</strong> {{ zwierze.imie }}</p>
+<p><strong>Gatunek:</strong> {{ zwierze.get_gatunek_display }}</p>
+<p><strong>Płeć:</strong> {{ zwierze.get_plec_display }}</p>
+<p><strong>Data urodzenia:</strong> 
+    {% if zwierze.data_urodzenia %}
+        {{ zwierze.data_urodzenia|date:"d.m.Y" }}
+    {% else %}
+        brak
+    {% endif %}
+</p>
+
+{% if user.weterynarz %}<p><strong>Opiekun:</strong> {{ zwierze.opiekun }}</p>{% endif %}
+
+<hr>
+<a href="{% url 'lista-zwierzat' %}" style="padding: 6px 12px;">
+    Powrót do listy zwierząt
+</a>
+{% endblock %}

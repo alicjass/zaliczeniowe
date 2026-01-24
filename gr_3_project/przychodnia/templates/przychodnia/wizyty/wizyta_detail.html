@@ -16,7 +16,15 @@
 {% endif %}
 
 <p><strong>Status:</strong> {{ wizyta.get_status_display }}</p>
-<p><strong>Notatka:</strong> {{ wizyta.notatka }}</p>
+
+{% if wizyta.status == 2 %}
+<p><strong>Notatka:</strong>
+    {% if wizyta.notatka %}
+        {{ wizyta.notatka }}
+    {% else %}
+        brak
+    {% endif %}</p>
+{% endif %}
 
 {% if wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
     <form method="get" action="{% url 'zrealizuj-wizyte' pk=wizyta.pk %}">

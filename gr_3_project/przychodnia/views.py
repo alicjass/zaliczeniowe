@@ -187,3 +187,26 @@ def lista_zwierzat(request):
         return HttpResponseForbidden()
     
     return render(request, 'przychodnia/zwierzeta/lista_zwierzat.html', {'zwierzeta': zwierzeta})
+
+
+# SZCZEGÓŁY ZWIERZAKA
+@login_required
+def zwierze_detail(request, pk):
+    user = request.user
+    
+    try:
+        zwierze = Zwierze.objects.get(id=pk)
+    except Zwierze.DoesNotExist:
+        return HttpResponse("Zwierzę nie istnieje", status=404)
+
+    if hasattr(user, 'opiekun'):
+        if zwierze.opiekun != user.opiekun:
+            return HttpResponse("Brak dostępu", status=403)
+
+    elif hasattr(user, 'weterynarz'):
+        pass
+
+    else:
+        return HttpResponse("Brak roli użytkownika", status=403)
+
+    return render(request, 'przychodnia/zwierzeta/zwierze_detail.html', {'zwierze': zwierze})
