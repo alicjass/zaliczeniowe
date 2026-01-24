@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .models import Opiekun, Weterynarz, Wizyta, STATUS_WIZYTA
-from .forms import WizytaForm
+from .forms import WizytaForm, NotatkaForm
 from datetime import date, datetime
 
 
@@ -37,6 +37,7 @@ def user_login(request):
 
         else:
             return render(request, 'przychodnia/login.html', {'error': 'Nieprawidłowe dane'})
+    
     return render(request, 'przychodnia/login.html')
 
 def user_logout(request):
@@ -84,7 +85,7 @@ def wizyta_detail(request, pk):
     else:
         return HttpResponse("Brak roli użytkownika", status=403)
 
-    return render(request, 'przychodnia/wizyty/wizyta_detail.html',{'wizyta': wizyta})
+    return render(request, 'przychodnia/wizyty/wizyta_detail.html', {'wizyta': wizyta})
 
 
 # DODAWANIE WIZYTY PRZEZ OPIEKUNA
@@ -147,8 +148,15 @@ def zrealizuj_wizyte(request, pk):
         return HttpResponseForbidden("Można realizować tylko wizyty z dzisiejszego dnia.")
 
     if request.method == "POST":
-        wizyta.status = STATUS_WIZYTA.Zrealizowana
-        wizyta.save()
-        return redirect("lista-wizyt")
+        form = NotatkaForm(request.POST)
 
-    return render(request, 'przychodnia/zrealizuj_wizyte.html', {'wizyta': wizyta})
+        if form.is_valid():
+            wizyta.notatka = form.cleaned_data["notatka"]
+            wizyta.status = STATUS_WIZYTA.Zrealizowana
+            wizyta.save()
+            return redirect("lista-wizyt")
+
+    else:
+        form = NotatkaForm()
+
+    return render(request, 'przychodnia/wizyty/zrealizuj_wizyte.html', {'wizyta': wizyta, 'form': form})

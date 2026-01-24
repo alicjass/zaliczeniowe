@@ -11,15 +11,15 @@
         {{ wizyta.data_wizyty|date:"d.m.Y" }}
         {{ wizyta.godzina_wizyty|time:"H:i" }}
     </strong>
-    dla zwierzaka <strong>{{ wizyta.zwierze.imie }}</strong>?
+    dla pacjenta <strong>{{ wizyta.zwierze.imie }}</strong>?
 </p>
 
 <form method="post">
     {% csrf_token %}
-    <button type="submit" style="background-color: red; color: white;">
+    <button type="submit" style="background-color: red; color: white; padding: 6px 12px;">
         Tak, odwołaj wizytę
     </button>
-    <a href="{% url 'lista-wizyt' %}" style="margin-left: 10px;">
+    <a href="{% url 'wizyta-detail' pk=wizyta.pk %}" style="margin-left: 10px;">
         Anuluj
     </a>
 </form>

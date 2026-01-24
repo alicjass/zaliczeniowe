@@ -1,0 +1,29 @@
+{% extends 'przychodnia/base.html' %}
+{% block title %}Zrealizuj wizytę{% endblock %}
+{% block content %}
+<h2>Zrealizuj wizytę:</h2>
+<p>
+	<strong>Pacjent:</strong> {{ wizyta.zwierze }}<br>
+	<strong>Termin:</strong> {{ wizyta.data_wizyty|date:"d.m.Y" }} {{ wizyta.godzina_wizyty|time:"H:i" }}<br>
+</p>
+
+{% if wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
+	<form method="post">
+		{% csrf_token %}
+		<p>
+			{{ form.notatka.label }}
+			{{ form.notatka }}
+		</p>
+		<button type="submit"
+            style="background-color: green; color: white; padding: 6px 12px;">
+            Oznacz jako zrealizowaną
+        </button>
+		<a href="{% url 'wizyta-detail' pk=wizyta.pk %}"
+            style="margin-left: 5px;">
+			Wróć do szczegółów
+		</a>
+	</form>
+{% else %}
+	<p>Brak możliwości realizacji tej wizyty.</p>
+{% endif %}
+{% endblock %}

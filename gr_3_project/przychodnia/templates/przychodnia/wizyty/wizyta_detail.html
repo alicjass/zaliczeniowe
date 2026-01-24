@@ -5,7 +5,7 @@
 {% block content %}
 <h2>Szczegóły wizyty:</h2>
 <p><strong>Termin:</strong> {{ wizyta.data_wizyty|date:"d.m.Y" }} {{ wizyta.godzina_wizyty|time:"H:i" }}</p>
-<p><strong>Zwierzę:</strong> {{ wizyta.zwierze.imie }}</p>
+<p><strong>Pacjent:</strong> {{ wizyta.zwierze.imie }}</p>
 
 {% if user.weterynarz %}
 <p><strong>Opiekun:</strong> {{ wizyta.zwierze.opiekun }}</p>
@@ -18,23 +18,26 @@
 <p><strong>Status:</strong> {{ wizyta.get_status_display }}</p>
 <p><strong>Notatka:</strong> {{ wizyta.notatka }}</p>
 
-{% if user.weterynarz and wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
-    <form method="post" action="{% url 'zrealizuj-wizyte' pk=wizyta.pk %}">
-        {% csrf_token %}
+{% if wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
+    <form method="get" action="{% url 'zrealizuj-wizyte' pk=wizyta.pk %}">
         <button type="submit"
-                style="background-color: green; color: white;">
-            Oznacz jako zrealizowaną
+            style="background-color: green; color: white; padding: 6px 12px;">
+            Przejdź do realizacji wizyty
         </button>
     </form>
 {% endif %}
 
-{% if user.opiekun and wizyta.zwierze.opiekun == user.opiekun and wizyta.status == 1 %}
-    <hr>
-    <form action="{% url 'odwolaj-wizyte' pk=wizyta.pk %}" method="get">
+{% if wizyta.zwierze.opiekun == user.opiekun and wizyta.status == 1 %}
+    <form method="get" action="{% url 'odwolaj-wizyte' pk=wizyta.pk %}">
         <button type="submit"
                 style="background-color: red; color: white; padding: 6px 12px;">
             Odwołaj wizytę
         </button>
     </form>
 {% endif %}
+
+<hr>
+<a href="{% url 'lista-wizyt' %}" style="padding: 6px 12px;">
+    Powrót do listy wizyt
+</a>
 {% endblock %}
