@@ -1,0 +1,37 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Lista zwierząt{% endblock %}
+
+{% block content %}
+{% if user.weterynarz %}<h2>Lista zwierząt:</h2>{% endif %}
+{% if user.opiekun %}<h2>Twoje zwierzęta:</h2>{% endif %}
+{% if zwierzeta %}
+<table border="1">
+    <tr>
+        <th>Imię</th>
+        <th>Gatunek</th>
+        <th>Płeć</th>
+        <th>Data urodzenia</th>
+        {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
+    </tr>
+    {% for zwierze in zwierzeta %}
+    <tr>
+        <td>{{ zwierze.imie }}</td>
+        <td>{{ zwierze.get_gatunek_display }}</td>
+        <td>{{ zwierze.get_plec_display }}</td>
+        <td>
+            {% if zwierze.data_urodzenia %}
+                {{ zwierze.data_urodzenia|date:"d.m.Y" }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+        {% if user.weterynarz %}<td>{{ zwierze.opiekun.imie }} {{ zwierze.opiekun.nazwisko }}</td>{% endif %}
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+    <p>Brak zwierząt w systemie.</p>
+{% endif %}
+
+{% endblock %}

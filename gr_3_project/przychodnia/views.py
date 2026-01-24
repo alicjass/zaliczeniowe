@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import Opiekun, Weterynarz, Wizyta, STATUS_WIZYTA
+from .models import Opiekun, Zwierze, Weterynarz, Wizyta, STATUS_WIZYTA
 from .forms import WizytaForm, NotatkaForm
 from datetime import date, datetime
 
@@ -69,17 +69,19 @@ def lista_wizyt(request):
 # SZCZEGÓŁY WIZYTY
 @login_required
 def wizyta_detail(request, pk):
+    user = request.user
+    
     try:
         wizyta = Wizyta.objects.get(id=pk)
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
 
-    if hasattr(request.user, 'opiekun'):
-        if wizyta.zwierze.opiekun != request.user.opiekun:
+    if hasattr(user, 'opiekun'):
+        if wizyta.zwierze.opiekun != user.opiekun:
             return HttpResponse("Brak dostępu", status=403)
 
-    elif hasattr(request.user, 'weterynarz'):
-        if wizyta.weterynarz != request.user.weterynarz:
+    elif hasattr(user, 'weterynarz'):
+        if wizyta.weterynarz != user.weterynarz:
             return HttpResponse("Brak dostępu", status=403)
 
     else:
@@ -91,16 +93,18 @@ def wizyta_detail(request, pk):
 # DODAWANIE WIZYTY PRZEZ OPIEKUNA
 @login_required
 def dodaj_wizyte(request):
-    if not hasattr(request.user, 'opiekun'):
+    user = request.user
+    
+    if not hasattr(user, 'opiekun'):
         return HttpResponse("Brak dostępu", status=403)
 
     if request.method == "POST":
-        form = WizytaForm(request.POST, opiekun=request.user.opiekun)
+        form = WizytaForm(request.POST, opiekun=user.opiekun)
         if form.is_valid():
             wizyta = form.save()
             return redirect('lista-wizyt')
     else:
-        form = WizytaForm(opiekun=request.user.opiekun)
+        form = WizytaForm(opiekun=user.opiekun)
 
     return render(request, 'przychodnia/wizyty/dodaj_wizyte.html', {'form': form})
 
@@ -108,12 +112,14 @@ def dodaj_wizyte(request):
 # ODWOLYWANIE WIZYTY PRZEZ OPIEKUNA
 @login_required
 def odwolaj_wizyte(request, pk):
+    user = request.user
+    
     try:
         wizyta = Wizyta.objects.get(id=pk)
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
 
-    if not hasattr(request.user, 'opiekun') or wizyta.zwierze.opiekun != request.user.opiekun:
+    if not hasattr(user, 'opiekun') or wizyta.zwierze.opiekun != user.opiekun:
         return HttpResponse("Brak dostępu", status=403)
 
     if wizyta.status != STATUS_WIZYTA.Zaplanowana:
@@ -133,12 +139,14 @@ def odwolaj_wizyte(request, pk):
 # REALIZACJA WIZYTY PRZEZ WETERYNARZA
 @login_required
 def zrealizuj_wizyte(request, pk):
+    user = request.user
+    
     try:
         wizyta = Wizyta.objects.get(id=pk)
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
 
-    if not hasattr(request.user, 'weterynarz') or wizyta.weterynarz != request.user.weterynarz:
+    if not hasattr(user, 'weterynarz') or wizyta.weterynarz != user.weterynarz:
         return HttpResponse("Brak dostępu", status=403)
 
     if wizyta.status != STATUS_WIZYTA.Zaplanowana:
@@ -160,3 +168,22 @@ def zrealizuj_wizyte(request, pk):
         form = NotatkaForm()
 
     return render(request, 'przychodnia/wizyty/zrealizuj_wizyte.html', {'wizyta': wizyta, 'form': form})
+
+
+# LISTA ZWIERZĄT DLA OPIEKUNA/WETERYNARZA
+@login_required
+def lista_zwierzat(request):
+    user = request.user
+
+    if hasattr(user, "opiekun"):
+        zwierzeta = Zwierze.objects.filter(
+            opiekun=user.opiekun
+        )
+
+    elif hasattr(user, "weterynarz"):
+        zwierzeta = Zwierze.objects.all()
+
+    else:
+        return HttpResponseForbidden()
+    
+    return render(request, 'przychodnia/zwierzeta/lista_zwierzat.html', {'zwierzeta': zwierzeta})
