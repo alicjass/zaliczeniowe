@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .models import Opiekun, Zwierze, Weterynarz, Wizyta, STATUS_WIZYTA
-from .forms import WizytaForm, NotatkaForm
+from .forms import ZwierzeForm, WizytaForm, NotatkaForm
 from datetime import date, datetime
 
 
@@ -210,3 +210,22 @@ def zwierze_detail(request, pk):
         return HttpResponse("Brak roli użytkownika", status=403)
 
     return render(request, 'przychodnia/zwierzeta/zwierze_detail.html', {'zwierze': zwierze})
+
+
+# DODAWANIE ZWIERZAKA PRZEZ OPIEKUNA
+@login_required
+def dodaj_zwierze(request):
+    user = request.user
+    
+    if not hasattr(user, 'opiekun'):
+        return HttpResponse("Brak dostępu", status=403)
+
+    if request.method == "POST":
+        form = ZwierzeForm(request.POST, opiekun=user.opiekun)
+        if form.is_valid():
+            zwierze = form.save()
+            return redirect('lista-zwierzat')
+    else:
+        form = ZwierzeForm(opiekun=user.opiekun)
+
+    return render(request, 'przychodnia/zwierzeta/dodaj_zwierze.html', {'form': form})

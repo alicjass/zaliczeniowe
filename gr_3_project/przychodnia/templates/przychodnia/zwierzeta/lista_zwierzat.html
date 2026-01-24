@@ -29,4 +29,12 @@
     <p>Brak zwierząt w systemie.</p>
 {% endif %}
 
+{% if user.opiekun %}
+<p style="margin-top: 20px;">
+    <a href="{% url 'dodaj-zwierze' %}" style="padding: 8px 12px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
+        Dodaj nowego zwierzaka
+    </a>
+</p>
+{% endif %}
+
 {% endblock %}
