@@ -14,7 +14,7 @@ class WizytaForm(forms.ModelForm):
         }
         widgets = {
             'data_wizyty': forms.DateInput(attrs={'type': 'date'}),
-            'godzina_wizyty': forms.Select(choices=[('', '--:--')] + [(f"{h:02d}:{m:02d}", f"{h:02d}:{m:02d}") for h in range(24) for m in (0, 30)]),
+            'godzina_wizyty': forms.Select(choices=[('', '--:--')] + [(f"{h:02d}:{m:02d}", f"{h:02d}:{m:02d}") for h in range(8, 18) for m in (0, 30)] + [('18:00', '18:00')]),
         }
 
     def __init__(self, *args, **kwargs):
@@ -33,9 +33,29 @@ class WizytaForm(forms.ModelForm):
 
     def clean(self):
         super().clean()
-        if self.cleaned_data.get('data_wizyty') and self.cleaned_data.get('godzina_wizyty'):
-            if datetime.combine(self.cleaned_data['data_wizyty'], self.cleaned_data['godzina_wizyty']) < datetime.now():
+        data_wizyty = self.cleaned_data.get('data_wizyty')
+        godzina_wizyty = self.cleaned_data.get('godzina_wizyty')
+        weterynarz = self.cleaned_data.get('weterynarz')
+        
+        if data_wizyty and godzina_wizyty:
+            if datetime.combine(data_wizyty, godzina_wizyty) < datetime.now():
                 raise ValidationError("Nie można umówić wizyty w przeszłości!")
+            
+            # sprawdzamy, czy weterynarz nie ma innej wizyty w tym terminie
+            if weterynarz:
+                istniejaca_wizyta = Wizyta.objects.filter(
+                    weterynarz=weterynarz,
+                    data_wizyty=data_wizyty,
+                    godzina_wizyty=godzina_wizyty
+                )
+                
+                # pomijamy aktualną wizytę
+                if self.instance.pk:
+                    istniejaca_wizyta = istniejaca_wizyta.exclude(pk=self.instance.pk)
+                
+                if istniejaca_wizyta.exists():
+                    raise ValidationError(f"Lek. wet. {weterynarz} ma już wizytę o tej godzinie. Wybierz inny termin.")
+        
         return self.cleaned_data
 
 
