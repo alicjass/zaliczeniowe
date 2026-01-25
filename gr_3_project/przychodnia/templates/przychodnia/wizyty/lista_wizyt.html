@@ -3,7 +3,8 @@
 {% block title %}Twoje wizyty{% endblock %}
 
 {% block content %}
-<h2>Twoje wizyty:</h2>
+{% if user.weterynarz %}<h2>Twoje nadchodzące wizyty:</h2>{% endif %}
+{% if user.opiekun %}<h2>Twoje wizyty:</h2>{% endif %}
 {% if wizyty %}
 <table border="1">
     <tr>
@@ -13,16 +14,13 @@
         {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
         {% if user.opiekun %}<th>Weterynarz</th>{% endif %}
         <th>Status</th>
+        <th>Akcje</th>
     </tr>
     {% for wizyta in wizyty %}
     <tr>
-        <td>
-            <a href="{% url 'wizyta-detail' pk=wizyta.pk %}">
-                {{ wizyta.data_wizyty|date:"d.m.Y" }}
-            </a>
-        </td>
+        <td>{{ wizyta.data_wizyty|date:"d.m.Y" }}</td>
         <td>{{ wizyta.godzina_wizyty|time:"H:i" }}</td>
-        <td>{{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
+        <td>{{ wizyta.zwierze.imie }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
         {% if user.weterynarz %}<td>{{ wizyta.zwierze.opiekun.imie }} {{ wizyta.zwierze.opiekun.nazwisko }}</td>{% endif %}
         {% if user.opiekun %}<td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>{% endif %}
         <td>
@@ -35,6 +33,9 @@
             {{ wizyta.get_status_display }}
             </span>
         </td>
+        <td>
+            <a href="{% url 'wizyta-detail' pk=wizyta.pk %}">Szczegóły</a>
+        </td>
     </tr>
     {% endfor %}
 </table>
@@ -43,12 +44,26 @@
 {% endif %}
 
 {% if user.opiekun %}
-<form method="get" action="{% url 'dodaj-wizyte' %}">
-    <button type="submit"
-            style="background-color: #4CAF50; color: white; padding: 6px 12px; text-decoration: none; margin-top: 10px;">
-        Dodaj nową wizytę
-    </button>
-</form>
+    <form method="get" action="{% url 'dodaj-wizyte' %}" style="display: inline">
+        <button type="submit"
+                style="background-color: #4CAF50; color: white; padding: 6px 12px; text-decoration: none; margin-top: 10px;">
+            Dodaj nową wizytę
+        </button>
+    </form>
+    
+    <form method="get" action="{% url 'historia-wizyt' %}" style="display: inline; margin-left: 5px;">
+        <button type="submit"
+                style="background-color: #2196F3; color: white; padding: 6px 12px; text-decoration: none;">
+            Historia wizyt
+        </button>
+    </form>
+{% endif %}
+
+{% if user.weterynarz %}
+<hr>
+<a href="{% url 'dzisiejsze-wizyty' %}" style="padding: 6px 12px;">
+    Powrót do dzisiejszych wizyt
+</a>
 {% endif %}
 
 {% endblock %}

@@ -49,7 +49,7 @@ class Zwierze(models.Model):
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
     def __str__(self):
-        return f"{self.imie} {self.opiekun.nazwisko} ({self.get_gatunek_display()})"
+        return f"{self.imie} ({self.get_gatunek_display()})"
 
     class Meta:
         verbose_name_plural = "Zwierzeta"
@@ -97,7 +97,7 @@ class Wizyta(models.Model):
     notatka = models.TextField(blank = True)
 
     def __str__(self):
-        return f"{self.zwierze.imie} {self.zwierze.opiekun.nazwisko}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
+        return f"{self.zwierze.imie}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
 
     class Meta:
         verbose_name_plural = "Wizyty"

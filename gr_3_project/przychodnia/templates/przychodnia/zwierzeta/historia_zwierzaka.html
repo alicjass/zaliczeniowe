@@ -1,0 +1,46 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Historia wizyt: {{ zwierze.imie }}{% endblock %}
+
+{% block content %}
+<h2>Historia wizyt: {{ zwierze.imie }} ({{ zwierze.get_gatunek_display }})</h2>
+
+{% if wizyty %}
+    <table border="1">
+        <tr>
+            <th>Data</th>
+            <th>Godzina</th>
+            <th>Weterynarz</th>
+            <th>Status</th>
+            <th>Akcje</th>
+        </tr>
+        {% for wizyta in wizyty %}
+        <tr>
+            <td>{{ wizyta.data_wizyty|date:"d.m.Y" }}</td>
+            <td>{{ wizyta.godzina_wizyty|time:"H:i" }}</td>
+            <td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>
+            <td>
+                <span class="
+                    {% if wizyta.status == 1 %}status-1
+                    {% elif wizyta.status == 2 %}status-2
+                    {% elif wizyta.status == 3 %}status-3
+                    {% endif %}
+                    ">
+                {{ wizyta.get_status_display }}
+                </span>
+            </td>
+            <td>
+                <a href="{% url 'wizyta-detail' pk=wizyta.pk %}">Szczegóły</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Brak zrealizowanych wizyt dla tego zwierzaka.</p>
+{% endif %}
+
+<hr>
+<a href="{% url 'zwierze-detail' pk=zwierze.pk %}" style="padding: 6px 12px;">
+    Powrót do szczegółów zwierzaka
+</a>
+{% endblock %}

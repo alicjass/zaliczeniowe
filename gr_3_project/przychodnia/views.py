@@ -33,7 +33,10 @@ def user_login(request):
             if user.is_superuser or user.is_staff:
                 return redirect('/admin/')
 
-            elif hasattr(user, 'weterynarz') or hasattr(user, 'opiekun'):
+            elif hasattr(user, 'weterynarz'):
+                return redirect('dzisiejsze-wizyty')
+            
+            elif hasattr(user, 'opiekun'):
                 return redirect('lista-wizyt')
 
         else:
@@ -46,7 +49,7 @@ def user_logout(request):
     return redirect('user-login')
 
 
-# LISTA WIZYT DLA OPIEKUNA/WETERYNARZA
+# LISTA NADCHODZĄCYCH WIZYT DLA OPIEKUNA/WETERYNARZA
 @login_required
 def lista_wizyt(request):
     user = request.user
@@ -54,19 +57,58 @@ def lista_wizyt(request):
     if hasattr(user, "opiekun"):
         wizyty = Wizyta.objects.filter(
             zwierze__opiekun=user.opiekun,
-            data_wizyty__gte=date.today()  # wyswietlamy tylko wizyty dzisiejsze i przyszłe
+            status=STATUS_WIZYTA.Zaplanowana  # tylko zaplanowane wizyty
         )
 
     elif hasattr(user, "weterynarz"):
         wizyty = Wizyta.objects.filter(
             weterynarz=user.weterynarz,
-            data_wizyty__gte=date.today()
+            data_wizyty__gt=date.today()  # wyswietlamy tylko przyszle wizyty (dzisiejsze w oddzielnym widoku)
         )
 
     else:
         return HttpResponseForbidden()
     
     return render(request, 'przychodnia/wizyty/lista_wizyt.html', {'wizyty': wizyty})
+
+
+# DZISIEJSZE WIZYTY WETERYNARZA
+@login_required
+def dzisiejsze_wizyty(request):
+    user = request.user
+
+    if not hasattr(user, "weterynarz"):
+        return HttpResponseForbidden()
+
+    wizyty = Wizyta.objects.filter(
+        weterynarz=user.weterynarz,
+        data_wizyty=date.today()
+    )
+    
+    return render(request, 'przychodnia/wizyty/dzisiejsze_wizyty.html', {'wizyty': wizyty})
+
+
+# HISTORIA WIZYT DLA OPIEKUNA/WETERYNARZA
+@login_required
+def historia_wizyt(request):
+    user = request.user
+
+    if hasattr(user, "opiekun"):
+        wizyty = Wizyta.objects.filter(
+            zwierze__opiekun=user.opiekun,
+            status=STATUS_WIZYTA.Zrealizowana
+        ).order_by('-data_wizyty', '-godzina_wizyty')
+
+    elif hasattr(user, "weterynarz"):
+        wizyty = Wizyta.objects.filter(
+            weterynarz=user.weterynarz,
+            status=STATUS_WIZYTA.Zrealizowana
+        ).order_by('-data_wizyty', '-godzina_wizyty')
+
+    else:
+        return HttpResponseForbidden()
+    
+    return render(request, 'przychodnia/wizyty/historia_wizyt.html', {'wizyty': wizyty})
 
 
 # SZCZEGÓŁY WIZYTY
@@ -202,7 +244,7 @@ def zrealizuj_wizyte(request, pk):
             wizyta.notatka = form.cleaned_data["notatka"]
             wizyta.status = STATUS_WIZYTA.Zrealizowana
             wizyta.save()
-            return redirect("lista-wizyt")
+            return redirect("dzisiejsze-wizyty")
 
     else:
         form = NotatkaForm()
@@ -254,7 +296,7 @@ def zwierze_detail(request, pk):
 
 # HISTORIA WIZYT ZWIERZAKA
 @login_required
-def historia_wizyt(request, pk):
+def historia_zwierzaka(request, pk):
     user = request.user
     
     try:
@@ -277,7 +319,7 @@ def historia_wizyt(request, pk):
         status=STATUS_WIZYTA.Zrealizowana
     ).order_by('-data_wizyty', '-godzina_wizyty')
 
-    return render(request, 'przychodnia/zwierzeta/historia_wizyt.html', {'zwierze': zwierze, 'wizyty': wizyty})
+    return render(request, 'przychodnia/zwierzeta/historia_zwierzaka.html', {'zwierze': zwierze, 'wizyty': wizyty})
 
 
 # DODAWANIE ZWIERZAKA PRZEZ OPIEKUNA

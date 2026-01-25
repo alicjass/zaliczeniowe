@@ -8,7 +8,7 @@
 <p>
     Czy na pewno chcesz odwołać wizytę
     <strong>
-        {{ wizyta.data_wizyty|date:"d.m.Y" }}
+        {{ wizyta.data_wizyty|date:"d.m.Y" }} o godz.
         {{ wizyta.godzina_wizyty|time:"H:i" }}
     </strong>
     dla pacjenta <strong>{{ wizyta.zwierze.imie }}</strong>?

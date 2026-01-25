@@ -1,0 +1,56 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Dzisiejsze wizyty{% endblock %}
+
+{% block content %}
+<h2>Twoje dzisiejsze wizyty ({{ wizyty|length }}):</h2>
+
+{% if wizyty %}
+<table border="1">
+    <tr>
+        <th>Godzina</th>
+        <th>Pacjent</th>
+        <th>Opiekun</th>
+        <th>Status</th>
+        <th>Akcje</th>
+    </tr>
+    {% for wizyta in wizyty %}
+    <tr>
+        <td>{{ wizyta.godzina_wizyty|time:"H:i" }}</td>
+        <td>{{ wizyta.zwierze.imie }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
+        <td>{{ wizyta.zwierze.opiekun.imie }} {{ wizyta.zwierze.opiekun.nazwisko }}</td>
+        <td>
+            <span class="
+                {% if wizyta.status == 1 %}status-1
+                {% elif wizyta.status == 2 %}status-2
+                {% elif wizyta.status == 3 %}status-3
+                {% endif %}
+            ">
+            {{ wizyta.get_status_display }}
+            </span>
+        </td>
+        <td>
+            <a href="{% url 'wizyta-detail' pk=wizyta.pk %}">Szczegóły</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+    <p>Brak wizyt na dzisiaj.</p>
+{% endif %}
+
+<form method="get" action="{% url 'lista-wizyt' %}" style="display: inline">
+    <button type="submit"
+            style="background-color: #4CAF50; color: white; padding: 6px 12px; text-decoration: none; margin-top: 10px;">
+        Zobacz nadchodzące wizyty →
+    </button>
+</form>
+
+<form method="get" action="{% url 'historia-wizyt' %}" style="display: inline; margin-left: 5px;">
+    <button type="submit"
+            style="background-color: #2196F3; color: white; padding: 6px 12px; text-decoration: none; margin-top: 10px;">
+        Historia wizyt
+    </button>
+</form>
+
+{% endblock %}

@@ -5,7 +5,7 @@
 {% block content %}
 <h2>Przełóż wizytę:</h2>
 
-<p><strong>Pacjent:</strong> {{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})</p>
+<p><strong>Pacjent:</strong> {{ wizyta.zwierze.imie }} ({{ wizyta.zwierze.get_gatunek_display }})</p>
 
 <form method="post">
     {% csrf_token %}

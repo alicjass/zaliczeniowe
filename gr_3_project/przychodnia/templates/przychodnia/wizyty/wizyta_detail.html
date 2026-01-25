@@ -14,7 +14,16 @@
 
 {% if user.opiekun %}<p><strong>Weterynarz:</strong> {{ wizyta.weterynarz }} </p>{% endif %}
 
-<p><strong>Status:</strong> {{ wizyta.get_status_display }}</p>
+<p><strong>Status:</strong> 
+    <span class="
+        {% if wizyta.status == 1 %}status-1
+        {% elif wizyta.status == 2 %}status-2
+        {% elif wizyta.status == 3 %}status-3
+        {% endif %}
+    ">
+    {{ wizyta.get_status_display }}
+    </span>
+</p>
 
 {% if wizyta.status == 2 %}
 <p><strong>Notatka:</strong>
@@ -51,7 +60,16 @@
 {% endif %}
 
 <hr>
+{% if user.opiekun %}
 <a href="{% url 'lista-wizyt' %}" style="padding: 6px 12px;">
     Powrót do listy wizyt
 </a>
+{% endif %}
+
+{% if user.weterynarz %}
+<a href="{% url 'dzisiejsze-wizyty' %}" style="padding: 6px 12px;">
+    Powrót do dzisiejszych wizyt
+</a>
+{% endif %}
+
 {% endblock %}

@@ -1,0 +1,59 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Historia wizyt{% endblock %}
+
+{% block content %}
+<h2>Historia Twoich wizyt:</h2>
+
+{% if wizyty %}
+    <table border="1">
+        <tr>
+            <th>Data</th>
+            <th>Godzina</th>
+            <th>Pacjent</th>
+            {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
+            {% if user.opiekun %}<th>Weterynarz</th>{% endif %}
+            <th>Status</th>
+            <th>Akcje</th>
+        </tr>
+        {% for wizyta in wizyty %}
+        <tr>
+            <td>{{ wizyta.data_wizyty|date:"d.m.Y" }}</td>
+            <td>{{ wizyta.godzina_wizyty|time:"H:i" }}</td>
+            <td>{{ wizyta.zwierze.imie }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
+            {% if user.weterynarz %}<td>{{ wizyta.zwierze.opiekun.imie }} {{ wizyta.zwierze.opiekun.nazwisko }}</td>{% endif %}
+            {% if user.opiekun %}<td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>{% endif %}
+            <td>
+                <span class="
+                    {% if wizyta.status == 1 %}status-1
+                    {% elif wizyta.status == 2 %}status-2
+                    {% elif wizyta.status == 3 %}status-3
+                    {% endif %}
+                    ">
+                {{ wizyta.get_status_display }}
+                </span>
+            </td>
+            <td>
+                <a href="{% url 'wizyta-detail' pk=wizyta.pk %}">Szczegóły</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Brak zrealizowanych wizyt.</p>
+{% endif %}
+
+<hr>
+{% if user.opiekun %}
+<a href="{% url 'lista-wizyt' %}" style="padding: 6px 12px;">
+    Powrót do listy wizyt
+</a>
+{% endif %}
+
+{% if user.weterynarz %}
+<a href="{% url 'dzisiejsze-wizyty' %}" style="padding: 6px 12px;">
+    Powrót do dzisiejszych wizyt
+</a>
+{% endif %}
+
+{% endblock %}
