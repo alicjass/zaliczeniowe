@@ -52,12 +52,14 @@ def lista_wizyt(request):
 
     if hasattr(user, "opiekun"):
         wizyty = Wizyta.objects.filter(
-            zwierze__opiekun=user.opiekun
+            zwierze__opiekun=user.opiekun,
+            data_wizyty__gte=date.today()  # wyswietlamy tylko wizyty dzisiejsze i przyszłe
         )
 
     elif hasattr(user, "weterynarz"):
         wizyty = Wizyta.objects.filter(
-            weterynarz=user.weterynarz
+            weterynarz=user.weterynarz,
+            data_wizyty__gte=date.today()
         )
 
     else:
@@ -81,8 +83,7 @@ def wizyta_detail(request, pk):
             return HttpResponse("Brak dostępu", status=403)
 
     elif hasattr(user, 'weterynarz'):
-        if wizyta.weterynarz != user.weterynarz:
-            return HttpResponse("Brak dostępu", status=403)
+        pass
 
     else:
         return HttpResponse("Brak roli użytkownika", status=403)
@@ -210,6 +211,34 @@ def zwierze_detail(request, pk):
         return HttpResponse("Brak roli użytkownika", status=403)
 
     return render(request, 'przychodnia/zwierzeta/zwierze_detail.html', {'zwierze': zwierze})
+
+
+# HISTORIA WIZYT ZWIERZAKA
+@login_required
+def historia_wizyt(request, pk):
+    user = request.user
+    
+    try:
+        zwierze = Zwierze.objects.get(id=pk)
+    except Zwierze.DoesNotExist:
+        return HttpResponse("Zwierzę nie istnieje", status=404)
+
+    if hasattr(user, 'opiekun'):
+        if zwierze.opiekun != user.opiekun:
+            return HttpResponse("Brak dostępu", status=403)
+
+    elif hasattr(user, 'weterynarz'):
+        pass
+
+    else:
+        return HttpResponse("Brak roli użytkownika", status=403)
+
+    wizyty = Wizyta.objects.filter(
+        zwierze=zwierze,
+        status=STATUS_WIZYTA.Zrealizowana
+    ).order_by('-data_wizyty', '-godzina_wizyty')
+
+    return render(request, 'przychodnia/zwierzeta/historia_wizyt.html', {'zwierze': zwierze, 'wizyty': wizyty})
 
 
 # DODAWANIE ZWIERZAKA PRZEZ OPIEKUNA

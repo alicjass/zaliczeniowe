@@ -7,7 +7,8 @@
 {% if wizyty %}
 <table border="1">
     <tr>
-        <th>Termin</th>
+        <th>Data wizyty</th>
+        <th>Godzina</th>
         <th>Dane pacjenta</th>
         {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
         {% if user.opiekun %}<th>Weterynarz</th>{% endif %}
@@ -17,10 +18,15 @@
     <tr>
         <td>
             <a href="{% url 'wizyta-detail' pk=wizyta.pk %}">
-                {{ wizyta.data_wizyty|date:"d.m.Y" }} {{ wizyta.godzina_wizyty|time:"H:i" }}
+                {{ wizyta.data_wizyty|date:"d.m.Y" }}
             </a>
         </td>
-        <td>{{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
+        <td>{{ wizyta.godzina_wizyty|time:"H:i" }}</td>
+        <td>
+            <a href="{% url 'zwierze-detail' pk=wizyta.zwierze.pk %}">
+                {{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})
+            </a>
+        </td>
         {% if user.weterynarz %}<td>{{ wizyta.zwierze.opiekun.imie }} {{ wizyta.zwierze.opiekun.nazwisko }}</td>{% endif %}
         {% if user.opiekun %}<td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>{% endif %}
         <td>

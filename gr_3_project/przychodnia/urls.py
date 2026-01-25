@@ -13,4 +13,5 @@ urlpatterns = [
     path('zwierzeta/lista/', views.lista_zwierzat, name='lista-zwierzat'),
     path('zwierzeta/dodaj/', views.dodaj_zwierze, name='dodaj-zwierze'),
     path('zwierzeta/<int:pk>/', views.zwierze_detail, name='zwierze-detail'),
+    path('zwierzeta/<int:pk>/historia/', views.historia_wizyt, name='historia-wizyt'),
 ]
