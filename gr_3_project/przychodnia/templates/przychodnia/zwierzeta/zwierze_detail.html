@@ -17,10 +17,12 @@
 
 {% if user.weterynarz %}<p><strong>Opiekun:</strong> {{ zwierze.opiekun }}</p>{% endif %}
 
-<a href="{% url 'historia-wizyt' pk=zwierze.pk %}"
-   style="background-color: rgb(37, 108, 184); color: white; padding: 6px 12px;">
-    Historia wizyt
-</a>
+<form method="get" action="{% url 'historia-wizyt' pk=zwierze.pk %}">
+    <button type="submit"
+            style="background-color: rgb(37, 108, 184); color: white; padding: 6px 12px; text-decoration: none; ">
+        Historia wizyt
+    </button>
+</form>
 
 <hr>
 <a href="{% url 'lista-zwierzat' %}" style="padding: 6px 12px;">

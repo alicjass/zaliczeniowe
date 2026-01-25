@@ -14,13 +14,21 @@ class WizytaForm(forms.ModelForm):
         }
         widgets = {
             'data_wizyty': forms.DateInput(attrs={'type': 'date'}),
-            'godzina_wizyty': forms.Select(choices=[(f"{h:02d}:{m:02d}", f"{h:02d}:{m:02d}") for h in range(24) for m in (0, 30)]),
+            'godzina_wizyty': forms.Select(choices=[('', '--:--')] + [(f"{h:02d}:{m:02d}", f"{h:02d}:{m:02d}") for h in range(24) for m in (0, 30)]),
         }
 
     def __init__(self, *args, **kwargs):
         self.opiekun = kwargs.pop("opiekun")
+
+        # przy przekładaniu wizyty ustawiamy aktualną jej godzinę jako wartość domyślną
+        initial = kwargs.get('initial', {})
+        if kwargs.get('instance') and kwargs['instance'].pk:
+            initial['godzina_wizyty'] = kwargs['instance'].godzina_wizyty.strftime("%H:%M")
+            kwargs['initial'] = initial
+        
         super().__init__(*args, **kwargs)
 
+        # do wyboru tylko zwierzęta danego opiekuna
         self.fields["zwierze"].queryset = Zwierze.objects.filter(opiekun=self.opiekun)
 
     def clean(self):
@@ -38,6 +46,7 @@ class NotatkaForm(forms.Form):
         required=True,
         error_messages={'required': 'Proszę wprowadzić notatkę medyczną.'}
     )
+
 
 class ZwierzeForm(forms.ModelForm):
     class Meta:

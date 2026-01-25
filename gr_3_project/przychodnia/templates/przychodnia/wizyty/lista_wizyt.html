@@ -7,9 +7,9 @@
 {% if wizyty %}
 <table border="1">
     <tr>
-        <th>Data wizyty</th>
+        <th>Data</th>
         <th>Godzina</th>
-        <th>Dane pacjenta</th>
+        <th>Pacjent</th>
         {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
         {% if user.opiekun %}<th>Weterynarz</th>{% endif %}
         <th>Status</th>
@@ -22,11 +22,7 @@
             </a>
         </td>
         <td>{{ wizyta.godzina_wizyty|time:"H:i" }}</td>
-        <td>
-            <a href="{% url 'zwierze-detail' pk=wizyta.zwierze.pk %}">
-                {{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})
-            </a>
-        </td>
+        <td>{{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})</td>
         {% if user.weterynarz %}<td>{{ wizyta.zwierze.opiekun.imie }} {{ wizyta.zwierze.opiekun.nazwisko }}</td>{% endif %}
         {% if user.opiekun %}<td>{{ wizyta.weterynarz.imie }} {{ wizyta.weterynarz.nazwisko }}</td>{% endif %}
         <td>
@@ -47,11 +43,12 @@
 {% endif %}
 
 {% if user.opiekun %}
-<p style="margin-top: 20px;">
-    <a href="{% url 'dodaj-wizyte' %}" style="padding: 8px 12px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
+<form method="get" action="{% url 'dodaj-wizyte' %}">
+    <button type="submit"
+            style="background-color: #4CAF50; color: white; padding: 6px 12px; text-decoration: none; margin-top: 10px;">
         Dodaj nową wizytę
-    </a>
-</p>
+    </button>
+</form>
 {% endif %}
 
 {% endblock %}

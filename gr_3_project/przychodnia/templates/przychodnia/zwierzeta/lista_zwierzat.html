@@ -10,6 +10,7 @@
     <tr>
         <th>Imię</th>
         <th>Gatunek</th>
+        <th>Płeć</th>
         {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
     </tr>
     {% for zwierze in zwierzeta %}
@@ -20,7 +21,7 @@
             </a>
         </td>
         <td>{{ zwierze.get_gatunek_display }}</td>
-
+        <td>{{ zwierze.get_plec_display }}</td>
         {% if user.weterynarz %}<td>{{ zwierze.opiekun.imie }} {{ zwierze.opiekun.nazwisko }}</td>{% endif %}
     </tr>
     {% endfor %}
@@ -30,11 +31,12 @@
 {% endif %}
 
 {% if user.opiekun %}
-<p style="margin-top: 20px;">
-    <a href="{% url 'dodaj-zwierze' %}" style="padding: 8px 12px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
+<form method="get" action="{% url 'dodaj-zwierze' %}">
+    <button type="submit"
+            style="background-color: #4CAF50; color: white; padding: 6px 12px; text-decoration: none; margin-top: 10px;">
         Dodaj nowego zwierzaka
-    </a>
-</p>
+    </button>
+</form>
 {% endif %}
 
 {% endblock %}

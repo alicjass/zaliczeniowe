@@ -8,7 +8,11 @@
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Zapisz</button>
+    <button type="submit" style="background-color: green; color: white; padding: 6px 12px;">
+        Zapisz</button>
+    <a href="{% url 'lista-zwierzat' %}" style="margin-left: 10px;">
+        Anuluj
+    </a>
 </form>
 <hr>
 {% endblock %}

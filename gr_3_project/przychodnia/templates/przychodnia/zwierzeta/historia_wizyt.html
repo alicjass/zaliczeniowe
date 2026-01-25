@@ -3,7 +3,7 @@
 {% block title %}Historia wizyt: {{ zwierze.imie }}{% endblock %}
 
 {% block content %}
-<h2>Historia wizyt: {{ zwierze.imie }} {{zwierze.opiekun.nazwisko}}</h2>
+<h2>Historia wizyt: {{ zwierze.imie }} {{zwierze.opiekun.nazwisko}} ({{ zwierze.get_gatunek_display }})</h2>
 
 {% if wizyty %}
     <table border="1">

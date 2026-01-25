@@ -1,0 +1,22 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Przełóż wizytę{% endblock %}
+
+{% block content %}
+<h2>Przełóż wizytę:</h2>
+
+<p><strong>Pacjent:</strong> {{ wizyta.zwierze.imie }} {{ wizyta.zwierze.opiekun.nazwisko }} ({{ wizyta.zwierze.get_gatunek_display }})</p>
+
+<form method="post">
+    {% csrf_token %}
+    <table border="0">
+        {{ form.as_table }}
+    </table>
+    <button type="submit" style="background-color: orange; color: white; padding: 6px 12px; margin-top: 10px;">
+        Przełóż wizytę
+    </button>
+    <a href="{% url 'wizyta-detail' pk=wizyta.pk %}" style="padding: 6px 12px;">
+        Anuluj
+    </a>
+</form>
+{% endblock %}

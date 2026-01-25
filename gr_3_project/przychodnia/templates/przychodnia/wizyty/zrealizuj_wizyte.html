@@ -4,7 +4,8 @@
 <h2>Zrealizuj wizytę:</h2>
 <p>
 	<strong>Pacjent:</strong> {{ wizyta.zwierze }}<br>
-	<strong>Termin:</strong> {{ wizyta.data_wizyty|date:"d.m.Y" }} {{ wizyta.godzina_wizyty|time:"H:i" }}<br>
+	<strong>Data:</strong> {{ wizyta.data_wizyty|date:"d.m.Y" }}<br>
+	<strong>Godzina:</strong> {{ wizyta.godzina_wizyty|time:"H:i" }}
 </p>
 
 {% if wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}

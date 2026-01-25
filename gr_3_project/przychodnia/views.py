@@ -1,3 +1,4 @@
+from django import forms
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
@@ -110,7 +111,50 @@ def dodaj_wizyte(request):
     return render(request, 'przychodnia/wizyty/dodaj_wizyte.html', {'form': form})
 
 
-# ODWOLYWANIE WIZYTY PRZEZ OPIEKUNA
+# FUNKCJA POMOCNICZA -> sprawdzamy, czy wizytę można zmienić (przełożyć/odwołać)
+def sprawdz_czy_mozna_zmienic(user, wizyta):
+    if not hasattr(user, 'opiekun') or wizyta.zwierze.opiekun != user.opiekun:
+        return False, HttpResponse("Brak dostępu", status=403)
+    
+    if wizyta.status != STATUS_WIZYTA.Zaplanowana:
+        return False, HttpResponseForbidden("Ta wizyta już się odbyła lub została odwołana.")
+    
+    if datetime.combine(wizyta.data_wizyty, wizyta.godzina_wizyty) <= datetime.now():
+        return False, HttpResponseForbidden("Nie można zmienić wizyty, która już się rozpoczęła lub minęła.")
+    
+    return True, None
+
+
+# PRZEŁOŻENIE WIZYTY PRZEZ OPIEKUNA
+@login_required
+def przeloz_wizyte(request, pk):
+    user = request.user
+    
+    try:
+        wizyta = Wizyta.objects.get(id=pk)
+    except Wizyta.DoesNotExist:
+        return HttpResponse("Wizyta nie istnieje", status=404)
+
+    is_valid, error_response = sprawdz_czy_mozna_zmienic(user, wizyta)
+    if not is_valid:
+        return error_response
+
+    if request.method == "POST":
+        form = WizytaForm(request.POST, instance=wizyta, opiekun=user.opiekun)
+        if form.is_valid():
+            wizyta = form.save()
+            return redirect("lista-wizyt")
+    else:
+        form = WizytaForm(instance=wizyta, opiekun=user.opiekun)
+
+    # nie zmieniamy pola zwierze podczas przekładania wizyty
+    form.fields['zwierze'].widget = forms.HiddenInput()
+    form.initial['zwierze'] = wizyta.zwierze_id
+
+    return render(request, 'przychodnia/wizyty/przeloz_wizyte.html', {'wizyta': wizyta, 'form': form})
+
+
+# ODWOŁANIE WIZYTY PRZEZ OPIEKUNA
 @login_required
 def odwolaj_wizyte(request, pk):
     user = request.user
@@ -120,14 +164,9 @@ def odwolaj_wizyte(request, pk):
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
 
-    if not hasattr(user, 'opiekun') or wizyta.zwierze.opiekun != user.opiekun:
-        return HttpResponse("Brak dostępu", status=403)
-
-    if wizyta.status != STATUS_WIZYTA.Zaplanowana:
-        return HttpResponseForbidden("Ta wizyta już się odbyła lub została odwołana.")
-
-    if datetime.combine(wizyta.data_wizyty, wizyta.godzina_wizyty) <= datetime.now():
-        return HttpResponseForbidden("Nie można odwołać wizyty, która już się rozpoczęła lub minęła.")
+    is_valid, error_response = sprawdz_czy_mozna_zmienic(user, wizyta)
+    if not is_valid:
+        return error_response
 
     if request.method == "POST":
         wizyta.status = STATUS_WIZYTA.Odwołana
