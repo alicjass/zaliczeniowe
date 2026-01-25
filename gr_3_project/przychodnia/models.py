@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import datetime, timedelta
 
 PLEC_OSOBA = models.IntegerChoices(
     'PlecOsoba',
@@ -84,6 +85,16 @@ class Wizyta(models.Model):
 
     def __str__(self):
         return f"{self.zwierze.imie}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
+
+    @classmethod  # metoda działająca na klasie, nie na obiekcie
+    def aktualizuj_przeterminowane_wizyty(cls):
+        """Zmienia status na "Odwołana" dla wizyt zaplanowanych, które minęły ponad 1h temu."""
+        
+        for wizyta in cls.objects.filter(status=STATUS_WIZYTA.Zaplanowana):
+            czas_wizyty = datetime.combine(wizyta.data_wizyty, wizyta.godzina_wizyty)
+            if czas_wizyty + timedelta(hours=1) < datetime.now():
+                wizyta.status = STATUS_WIZYTA.Odwołana
+                wizyta.save()
 
     class Meta:
         verbose_name_plural = "Wizyty"

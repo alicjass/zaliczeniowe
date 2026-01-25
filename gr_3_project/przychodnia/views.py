@@ -54,6 +54,8 @@ def user_logout(request):
 def lista_wizyt(request):
     user = request.user
 
+    Wizyta.aktualizuj_przeterminowane_wizyty()
+
     if hasattr(user, "opiekun"):
         wizyty = Wizyta.objects.filter(
             zwierze__opiekun=user.opiekun,
@@ -76,6 +78,8 @@ def lista_wizyt(request):
 @login_required
 def dzisiejsze_wizyty(request):
     user = request.user
+    
+    Wizyta.aktualizuj_przeterminowane_wizyty()
 
     if not hasattr(user, "weterynarz"):
         return HttpResponseForbidden()
@@ -116,6 +120,8 @@ def historia_wizyt(request):
 def wizyta_detail(request, pk):
     user = request.user
     
+    Wizyta.aktualizuj_przeterminowane_wizyty()
+
     try:
         wizyta = Wizyta.objects.get(id=pk)
     except Wizyta.DoesNotExist:
