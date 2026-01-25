@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Opiekun, Zwierze, Weterynarz, GrafikDostepnosci, Wizyta
+from .models import Opiekun, Zwierze, Weterynarz, Wizyta
 
 class OpiekunSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,20 +57,6 @@ class WeterynarzSerializer(serializers.ModelSerializer):
                 "Nazwisko powinno zawierać tylko litery i rozpoczynać się wielką literą!"
                 )
         return value
-
-
-class GrafikDostepnosciSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GrafikDostepnosci
-        fields = '__all__'
-
-    def validate(self, data):
-        if data['data'] < date.today():
-            raise serializers.ValidationError("Data nie może być z przeszłości.")
-        
-        if data['godz_od'] >= data['godz_do']:
-            raise serializers.ValidationError("Godzina rozpoczęcia nie może być późniejsza niż godzina zakończenia.")
-        return data
 
 
 class WizytaSerializer(serializers.ModelSerializer):

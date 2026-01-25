@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Opiekun, Zwierze, Weterynarz, GrafikDostepnosci, Wizyta
+from .models import Opiekun, Zwierze, Weterynarz, Wizyta
 
 @admin.register(Opiekun)
 class OpiekunAdmin(admin.ModelAdmin):
@@ -13,5 +13,4 @@ class WeterynarzAdmin(admin.ModelAdmin):
     search_fields = ('user__username',)
 
 admin.site.register(Zwierze)
-admin.site.register(GrafikDostepnosci)
 admin.site.register(Wizyta)

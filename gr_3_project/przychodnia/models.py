@@ -74,24 +74,10 @@ class Weterynarz(models.Model):
         ordering = ['nazwisko', 'imie']
 
 
-class GrafikDostepnosci(models.Model):
-    weterynarz = models.ForeignKey(Weterynarz, on_delete = models.CASCADE)
-    data = models.DateField()
-    godz_od = models.TimeField()
-    godz_do = models.TimeField()
-
-    def __str__(self):
-        return f"lek. wet. {self.weterynarz.nazwisko}: {self.data.strftime('%d.%m.%Y')} {self.godz_od.strftime('%H:%M')}-{self.godz_do.strftime('%H:%M')}"
-
-    class Meta:
-        verbose_name_plural = "Grafiki dostepnosci"
-        ordering = ['data', 'godz_od']
-
-
 class Wizyta(models.Model):
     zwierze = models.ForeignKey(Zwierze, on_delete = models.CASCADE)
     weterynarz = models.ForeignKey(Weterynarz, on_delete = models.PROTECT)
-    data_wizyty = models.DateField()  # warunek: weterynarz jest dostepny (grafik dostepnosci + inne wizyty)
+    data_wizyty = models.DateField()  # warunek: weterynarz jest dostepny (nie ma kolizji z innymi wizytami)
     godzina_wizyty = models.TimeField()
     status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
     notatka = models.TextField(blank = True)
