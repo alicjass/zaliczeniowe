@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .models import Opiekun, Zwierze, Weterynarz, Wizyta, STATUS_WIZYTA
-from .forms import ZwierzeForm, WizytaForm, NotatkaForm
+from .forms import UserForm, WizytaForm, NotatkaForm, ZwierzeForm
 from datetime import date, datetime
 
 
@@ -48,6 +48,50 @@ def user_logout(request):
     logout(request)
     return redirect('user-login')
 
+
+# PROFIL UŻYTKOWNIKA
+@login_required
+def user_profil(request):
+    user = request.user
+    
+    opiekun = None
+    weterynarz = None
+    
+    if hasattr(user, 'opiekun'):
+        opiekun = user.opiekun
+        
+    elif hasattr(user, 'weterynarz'):
+        weterynarz = user.weterynarz
+    
+    return render(request, 'przychodnia/user/user_profil.html', {
+        'user': user,
+        'opiekun': opiekun,
+        'weterynarz': weterynarz
+    })
+
+# EDYCJA PROFILU UŻYTKOWNIKA
+@login_required
+def edytuj_profil(request):
+    user = request.user
+    
+    if hasattr(user, 'opiekun'):
+        instance = user.opiekun
+    
+    elif hasattr(user, 'weterynarz'):
+        instance = user.weterynarz
+    
+    else:
+        return HttpResponse("Brak dostępu", status=403)
+    
+    if request.method == "POST":
+        form = UserForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return redirect('user-profil')
+    else:
+        form = UserForm(instance=instance)
+    
+    return render(request, 'przychodnia/user/edytuj_profil.html', {'form': form})
 
 # LISTA NADCHODZĄCYCH WIZYT DLA OPIEKUNA/WETERYNARZA
 @login_required

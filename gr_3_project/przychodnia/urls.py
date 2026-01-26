@@ -1,10 +1,19 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
     path('welcome/', views.welcome_view, name = 'welcome-view'),
     path('login/', views.user_login, name='user-login'),
     path('logout/', views.user_logout, name='user-logout'),
+    path('user/profil/', views.user_profil, name='user-profil'),
+    path('user/profil/edytuj/', views.edytuj_profil, name='edytuj-profil'),
+    path('user/profil/zmien-haslo/', 
+         auth_views.PasswordChangeView.as_view(
+             template_name='przychodnia/user/zmien_haslo.html', 
+             success_url='/przychodnia/user/profil/'
+         ), 
+         name='zmien-haslo'),
     path('wizyty/lista/', views.lista_wizyt, name='lista-wizyt'),
     path('wizyty/dzisiejsze/', views.dzisiejsze_wizyty, name='dzisiejsze-wizyty'),
     path('wizyty/historia/', views.historia_wizyt, name='historia-wizyt'),

@@ -1,0 +1,33 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Twój profil{% endblock %}
+
+{% block content %}
+<h2>Twój profil:</h2>
+
+<p><strong>Login:</strong> {{ user.username }}</p>
+
+{% with profil=opiekun|default:weterynarz %}
+    {% if profil %}
+        <p><strong>Imię:</strong> {{ profil.imie }}</p>
+        <p><strong>Nazwisko:</strong> {{ profil.nazwisko }}</p>
+        <p><strong>Płeć:</strong> {{ profil.get_plec_display }}</p>
+        {% if weterynarz %}
+            <p><strong>Specjalizacja:</strong> {{ weterynarz.specjalizacja }}</p>
+        {% endif %}
+    {% endif %}
+{% endwith %}
+
+<form method="get" action="{% url 'edytuj-profil' %}" style="display: inline">
+    <button type="submit" style="background-color: #2196F3; color: white; padding: 6px 12px; margin-top: 5px;">
+        Edytuj profil
+    </button>
+</form>
+
+<form method="get" action="{% url 'zmien-haslo' %}" style="display: inline; margin-left: 5px;">
+    <button type="submit" style="background-color: gray; color: white; padding: 6px 12px;">
+        Zmień hasło
+    </button>
+</form>
+
+{% endblock %}

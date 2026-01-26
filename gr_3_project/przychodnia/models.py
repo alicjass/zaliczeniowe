@@ -84,7 +84,7 @@ class Wizyta(models.Model):
     notatka = models.TextField(blank = True)
 
     def __str__(self):
-        return f"{self.zwierze.imie}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (lek. wet. {self.weterynarz.nazwisko})"
+        return f"{self.zwierze.imie}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (weterynarz: {self.weterynarz.nazwisko})"
 
     @classmethod  # metoda działająca na klasie, nie na obiekcie
     def aktualizuj_przeterminowane_wizyty(cls):

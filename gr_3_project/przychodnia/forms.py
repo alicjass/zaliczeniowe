@@ -2,7 +2,54 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from datetime import date, datetime
-from .models import Zwierze, Weterynarz, Wizyta
+from .models import  Opiekun, PLEC_OSOBA, Zwierze, Weterynarz, Wizyta
+
+
+class UserForm(forms.Form):
+    imie = forms.CharField(max_length=50, label="Imię")
+    nazwisko = forms.CharField(max_length=100, label="Nazwisko")
+    plec = forms.ChoiceField(choices=PLEC_OSOBA.choices, label="Płeć")
+    specjalizacja = forms.CharField(max_length=100, required=False, label="Specjalizacja")
+
+    def __init__(self, data=None, instance=None, **kwargs):
+        super().__init__(data, **kwargs)
+        self.instance = instance
+        
+        if instance:
+            self.fields['imie'].initial = instance.imie
+            self.fields['nazwisko'].initial = instance.nazwisko
+            self.fields['plec'].initial = instance.plec
+        
+        # jesli user to weterynarz uzupelniamy tez pole 'specjalizacja'
+        if isinstance(instance, Weterynarz):
+            self.fields['specjalizacja'].initial = instance.specjalizacja
+        
+        # jesli user to opiekun usuwamy pole 'specjalizacja'
+        else:
+            del self.fields['specjalizacja']
+
+    def clean_imie(self):
+        value = self.cleaned_data.get('imie')
+        if value and not (value[0].isupper() and value.isalpha()):
+            raise ValidationError("Imię powinno zawierać tylko litery i rozpoczynać się wielką literą!")
+        return value
+
+    def clean_nazwisko(self):
+        value = self.cleaned_data.get('nazwisko')
+        if value and not (value[0].isupper() and value.isalpha()):
+            raise ValidationError("Nazwisko powinno zawierać tylko litery i rozpoczynać się wielką literą!")
+        return value
+
+    def save(self):
+        # nadpisywanie pol obiektu nowymi danymi
+        for field, value in self.cleaned_data.items():
+            setattr(self.instance, field, value)
+        self.instance.save()
+        
+        # synchronizujemy nowe dane z powiązanym User
+        self.instance.user.first_name = self.cleaned_data['imie']
+        self.instance.user.last_name = self.cleaned_data['nazwisko']
+        self.instance.user.save()
 
 
 class WizytaForm(forms.ModelForm):
@@ -11,6 +58,9 @@ class WizytaForm(forms.ModelForm):
         fields = ["zwierze", "weterynarz", "data_wizyty", "godzina_wizyty"]
         labels = {
             "zwierze": "Pacjent",
+            "weterynarz": "Weterynarz",
+            "data_wizyty": "Data",
+            "godzina_wizyty": "Godzina",
         }
         widgets = {
             'data_wizyty': forms.DateInput(attrs={'type': 'date'}),
@@ -54,7 +104,7 @@ class WizytaForm(forms.ModelForm):
                     istniejaca_wizyta = istniejaca_wizyta.exclude(pk=self.instance.pk)
                 
                 if istniejaca_wizyta.exists():
-                    raise ValidationError(f"Lek. wet. {weterynarz} ma już wizytę o tej godzinie. Wybierz inny termin.")
+                    raise ValidationError(f"Weterynarz {weterynarz} ma już wizytę o tej godzinie. Wybierz inny termin.")
         
         return self.cleaned_data
 
@@ -77,7 +127,9 @@ class ZwierzeForm(forms.ModelForm):
         }
         labels = {
             "imie": "Imię",
+            "gatunek": "Gatunek",
             "plec": "Płeć",
+            "data_urodzenia": "Data urodzenia",
         }
 
     def __init__(self, *args, **kwargs):

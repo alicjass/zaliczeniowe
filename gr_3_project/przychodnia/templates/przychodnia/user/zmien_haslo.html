@@ -1,0 +1,15 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Zmiana hasła{% endblock %}
+
+{% block content %}
+<h2>Zmień hasło:</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Zmień hasło</button>
+    <a href="{% url 'user-profil' %}"><button type="button">Anuluj</button></a>
+</form>
+
+{% endblock %}
