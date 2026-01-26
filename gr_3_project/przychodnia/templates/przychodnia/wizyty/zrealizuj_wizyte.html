@@ -20,11 +20,12 @@
             Oznacz jako zrealizowaną
         </button>
 		<a href="{% url 'wizyta-detail' pk=wizyta.pk %}"
-            style="margin-left: 5px;">
-			Wróć do szczegółów
+            style="margin-left: 10px;">
+			Anuluj
 		</a>
 	</form>
 {% else %}
 	<p>Brak możliwości realizacji tej wizyty.</p>
 {% endif %}
+<hr>
 {% endblock %}

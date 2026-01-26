@@ -15,8 +15,9 @@
     <button type="submit" style="background-color: orange; color: white; padding: 6px 12px; margin-top: 10px;">
         Przełóż wizytę
     </button>
-    <a href="{% url 'wizyta-detail' pk=wizyta.pk %}" style="padding: 6px 12px;">
+    <a href="{% url 'wizyta-detail' pk=wizyta.pk %}" style="margin-left: 10px;">
         Anuluj
     </a>
 </form>
+<hr>
 {% endblock %}

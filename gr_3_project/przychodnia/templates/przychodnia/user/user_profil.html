@@ -19,15 +19,16 @@
 {% endwith %}
 
 <form method="get" action="{% url 'edytuj-profil' %}" style="display: inline">
-    <button type="submit" style="background-color: #2196F3; color: white; padding: 6px 12px; margin-top: 5px;">
+    <button type="submit" style="background-color: #2196F3; color: white; padding: 6px 12px;">
         Edytuj profil
     </button>
 </form>
 
-<form method="get" action="{% url 'zmien-haslo' %}" style="display: inline; margin-left: 5px;">
-    <button type="submit" style="background-color: gray; color: white; padding: 6px 12px;">
+<form method="get" action="{% url 'zmien-haslo' %}" style="display: inline;">
+    <button type="submit" style="background-color: gray; color: white; padding: 6px 12px; margin-left: 5px;">
         Zmień hasło
     </button>
 </form>
 
+<hr>
 {% endblock %}

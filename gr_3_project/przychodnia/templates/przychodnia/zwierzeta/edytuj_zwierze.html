@@ -1,9 +1,9 @@
 {% extends "przychodnia/base.html" %}
 
-{% block title %}Edycja profilu{% endblock %}
+{% block title %}Edytuj zwierzę{% endblock %}
 
 {% block content %}
-<h2>Edytuj profil:</h2>
+<h1>Edytuj zwierzaka:</h1>
 
 <form method="post">
     {% csrf_token %}
@@ -11,8 +11,9 @@
     <button type="submit" style="background-color: green; color: white; padding: 6px 12px;">
         Zapisz zmiany
     </button>
-    <a href="{% url 'user-profil' %}" style="margin-left: 10px;">Anuluj</a>
+    <a href="{% url 'zwierze-detail' pk=zwierze.pk %}" style="margin-left: 10px;">
+        Anuluj
+    </a>
 </form>
 <hr>
-
 {% endblock %}

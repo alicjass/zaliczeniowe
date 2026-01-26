@@ -17,12 +17,21 @@
 
 {% if user.weterynarz %}<p><strong>Opiekun:</strong> {{ zwierze.opiekun }}</p>{% endif %}
 
-<form method="get" action="{% url 'historia-zwierzaka' pk=zwierze.pk %}">
+<form method="get" action="{% url 'historia-zwierzaka' pk=zwierze.pk %}" style="display: inline">
     <button type="submit"
-            style="background-color: rgb(37, 108, 184); color: white; padding: 6px 12px; text-decoration: none; ">
+            style="background-color: #2196F3; color: white; padding: 6px 12px; text-decoration: none; ">
         Historia wizyt zwierzaka
     </button>
 </form>
+
+{% if user.opiekun %}
+<form method="get" action="{% url 'edytuj-zwierze' pk=zwierze.pk %}" style="display: inline;">
+    <button type="submit"
+            style="background-color: gray; color: white; padding: 6px 12px; text-decoration: none; margin-left: 5px;">
+        Edytuj dane zwierzaka
+    </button>
+</form>
+{% endif %}
 
 <hr>
 <a href="{% url 'lista-zwierzat' %}" style="padding: 6px 12px;">

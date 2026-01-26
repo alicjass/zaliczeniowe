@@ -389,3 +389,27 @@ def dodaj_zwierze(request):
         form = ZwierzeForm(opiekun=user.opiekun)
 
     return render(request, 'przychodnia/zwierzeta/dodaj_zwierze.html', {'form': form})
+
+
+# EDYCJA ZWIERZAKA PRZEZ OPIEKUNA
+@login_required
+def edytuj_zwierze(request, pk):
+    user = request.user
+    
+    try:
+        zwierze = Zwierze.objects.get(id=pk)
+    except Zwierze.DoesNotExist:
+        return HttpResponse("Zwierzę nie istnieje", status=404)
+
+    if not hasattr(user, 'opiekun') or zwierze.opiekun != user.opiekun:
+        return HttpResponse("Brak dostępu", status=403)
+    
+    if request.method == "POST":
+        form = ZwierzeForm(request.POST, instance=zwierze, opiekun=user.opiekun)
+        if form.is_valid():
+            zwierze = form.save()
+            return redirect("zwierze-detail", pk=zwierze.pk)
+    else:
+        form = ZwierzeForm(instance=zwierze, opiekun=user.opiekun)
+
+    return render(request, 'przychodnia/zwierzeta/edytuj_zwierze.html', {'zwierze': zwierze, 'form': form})
