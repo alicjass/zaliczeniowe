@@ -1,0 +1,17 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Rejestracja - Krok 1{% endblock %}
+
+{% block content %}
+<h2>Rejestracja - Krok 1/2</h2>
+<p>Utwórz konto i wybierz typ użytkownika:</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p>
+        <input type="submit" value="Dalej">
+        <a href="{% url 'user-login' %}" style="margin-left: 10px;">Anuluj</a>
+    </p>
+</form>
+{% endblock %}

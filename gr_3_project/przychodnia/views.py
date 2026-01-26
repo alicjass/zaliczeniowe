@@ -4,8 +4,9 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from .models import Opiekun, Zwierze, Weterynarz, Wizyta, STATUS_WIZYTA
-from .forms import UserForm, WizytaForm, NotatkaForm, ZwierzeForm
+from .forms import RegistrationForm, ProfilForm, WizytaForm, NotatkaForm, ZwierzeForm
 from datetime import date, datetime
 
 
@@ -18,6 +19,79 @@ def welcome_view(request):
         Aktualna data i czas na serwerze: {now}.
         </body></html>"""
     return HttpResponse(html)
+
+
+# REJESTRACJA - KROK 1: dane Usera + wybór typu użytkownika
+def user_register_step1(request):
+    if request.method == "POST":
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            # zapisujemy dane w sesji
+            request.session['registration_data'] = {
+                'username': form.cleaned_data['username'],
+                'password': form.cleaned_data['password1'],
+                'typ_uzytkownika': form.cleaned_data['typ_uzytkownika']
+            }
+            return redirect('user-register-step2')
+    else:
+        # jesli dane są w sesji, wyswietlaja sie jako domyslne
+        registration_data = request.session.get('registration_data', {})
+        initial = {
+            'username': registration_data.get('username'),
+            'typ_uzytkownika': registration_data.get('typ_uzytkownika')
+        }
+        form = RegistrationForm(initial=initial)
+    
+    return render(request, 'przychodnia/rejestracja_step1.html', {'form': form})
+
+# REJESTRACJA - KROK 2: uzupełnienie profilu i utworzenie konta 
+def user_register_step2(request):
+    registration_data = request.session.get('registration_data')
+    
+    if not registration_data:
+        return redirect('user-register-step1')
+    
+    typ_uzytkownika = registration_data['typ_uzytkownika']
+    
+    if request.method == "POST":
+        form = ProfilForm(request.POST, typ_uzytkownika=typ_uzytkownika)
+        if form.is_valid():
+            # tworzymy User
+            user = User.objects.create_user(
+                username=registration_data['username'],
+                password=registration_data['password'],
+                first_name=form.cleaned_data['imie'],
+                last_name=form.cleaned_data['nazwisko']
+            )
+            
+            # tworzymy profil
+            profil_data = {
+                'user': user,
+                'imie': form.cleaned_data['imie'],
+                'nazwisko': form.cleaned_data['nazwisko'],
+                'plec': form.cleaned_data['plec']
+            }
+            
+            if typ_uzytkownika == 'opiekun':
+                Opiekun.objects.create(**profil_data)
+                redirect_url = 'lista-wizyt'
+            else:
+                profil_data['specjalizacja'] = form.cleaned_data.get('specjalizacja', '')
+                Weterynarz.objects.create(**profil_data)
+                redirect_url = 'dzisiejsze-wizyty'
+            
+            del request.session['registration_data']
+            
+            # logujemy i przekierowujemy
+            login(request, user)
+            return redirect(redirect_url)
+    else:
+        form = ProfilForm(typ_uzytkownika=typ_uzytkownika)
+    
+    return render(request, 'przychodnia/rejestracja_step2.html', {
+        'form': form,
+        'typ_uzytkownika': typ_uzytkownika
+    })
 
 
 # LOGOWANIE/WYLOGOWANIE UŻYTKOWNIKA
@@ -84,12 +158,12 @@ def edytuj_profil(request):
         return HttpResponse("Brak dostępu", status=403)
     
     if request.method == "POST":
-        form = UserForm(request.POST, instance=instance)
+        form = ProfilForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
             return redirect('user-profil')
     else:
-        form = UserForm(instance=instance)
+        form = ProfilForm(instance=instance)
     
     return render(request, 'przychodnia/user/edytuj_profil.html', {'form': form})
 

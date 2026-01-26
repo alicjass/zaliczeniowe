@@ -28,7 +28,7 @@ class Opiekun(models.Model):
 
     imie = models.CharField(max_length = 50)
     nazwisko = models.CharField(max_length = 100)
-    plec = models.IntegerField(choices = PLEC_OSOBA.choices)
+    plec = models.IntegerField(choices = PLEC_OSOBA.choices, default = PLEC_OSOBA.Inna)
     
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
@@ -62,7 +62,7 @@ class Weterynarz(models.Model):
 
     imie = models.CharField(max_length = 50)
     nazwisko = models.CharField(max_length = 100)
-    plec = models.IntegerField(choices = PLEC_OSOBA.choices)
+    plec = models.IntegerField(choices = PLEC_OSOBA.choices, default = PLEC_OSOBA.Inna)
     specjalizacja = models.CharField(max_length=100, blank=True)
     
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
@@ -78,7 +78,7 @@ class Weterynarz(models.Model):
 class Wizyta(models.Model):
     zwierze = models.ForeignKey(Zwierze, on_delete = models.CASCADE)
     weterynarz = models.ForeignKey(Weterynarz, on_delete = models.PROTECT)
-    data_wizyty = models.DateField()  # warunek: weterynarz jest dostepny (nie ma kolizji z innymi wizytami)
+    data_wizyty = models.DateField()
     godzina_wizyty = models.TimeField()
     status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
     notatka = models.TextField(blank = True)
