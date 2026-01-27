@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from datetime import date, datetime
-from .models import  Opiekun, PLEC_OSOBA, Zwierze, Weterynarz, Wizyta
+from .models import Opiekun, PLEC_OSOBA, Zwierze, Weterynarz, Wizyta
 
 
 TYP_UZYTKOWNIKA = [
@@ -13,7 +13,7 @@ TYP_UZYTKOWNIKA = [
 ]
 
 class RegistrationForm(UserCreationForm):
-    """Rejestracja: dane Usera + wybór typu użytkownika"""
+    """Formularz rejestracji: dane Usera + wybór typu użytkownika"""
     typ_uzytkownika = forms.ChoiceField(
         choices=TYP_UZYTKOWNIKA,
         label="Typ użytkownika",
@@ -26,7 +26,7 @@ class RegistrationForm(UserCreationForm):
 
 
 class ProfilForm(forms.Form):
-    """Profil użytkownika: edycja lub dokończenie rejestracji"""
+    """Formularz profilu użytkownika: edycja lub dokończenie rejestracji"""
     imie = forms.CharField(max_length=50, label="Imię")
     nazwisko = forms.CharField(max_length=100, label="Nazwisko")
     plec = forms.ChoiceField(choices=PLEC_OSOBA.choices, label="Płeć", initial=PLEC_OSOBA.Inna)
@@ -75,6 +75,7 @@ class ProfilForm(forms.Form):
 
 
 class WizytaForm(forms.ModelForm):
+    """Formularz wizyty: umawianie lub edycja"""
     class Meta:
         model = Wizyta
         fields = ["zwierze", "weterynarz", "data_wizyty", "godzina_wizyty"]
@@ -86,6 +87,7 @@ class WizytaForm(forms.ModelForm):
         }
         widgets = {
             'data_wizyty': forms.DateInput(attrs={'type': 'date'}),
+            # godziny do wyboru: od 8:00 do 18:00, co pół godziny 
             'godzina_wizyty': forms.Select(choices=[('', '--:--')] + [(f"{h:02d}:{m:02d}", f"{h:02d}:{m:02d}") for h in range(8, 18) for m in (0, 30)] + [('18:00', '18:00')]),
         }
 
@@ -93,10 +95,11 @@ class WizytaForm(forms.ModelForm):
         self.opiekun = kwargs.pop("opiekun")
 
         # przy przekładaniu wizyty ustawiamy aktualną jej godzinę jako wartość domyślną
-        initial = kwargs.get('initial', {})
-        if kwargs.get('instance') and kwargs['instance'].pk:
-            initial['godzina_wizyty'] = kwargs['instance'].godzina_wizyty.strftime("%H:%M")
-            kwargs['initial'] = initial
+        instance = kwargs.get('instance')
+        if instance and instance.pk:
+            if 'initial' not in kwargs:
+                kwargs['initial'] = {}
+            kwargs['initial']['godzina_wizyty'] = instance.godzina_wizyty.strftime("%H:%M")
         
         super().__init__(*args, **kwargs)
 
@@ -115,23 +118,20 @@ class WizytaForm(forms.ModelForm):
             
             # sprawdzamy, czy weterynarz nie ma innej wizyty w tym terminie
             if weterynarz:
-                istniejaca_wizyta = Wizyta.objects.filter(
+                konflikt = Wizyta.objects.filter(
                     weterynarz=weterynarz,
                     data_wizyty=data_wizyty,
                     godzina_wizyty=godzina_wizyty
-                )
-                
-                # pomijamy aktualną wizytę
-                if self.instance.pk:
-                    istniejaca_wizyta = istniejaca_wizyta.exclude(pk=self.instance.pk)
-                
-                if istniejaca_wizyta.exists():
+                ).exclude(pk=self.instance.pk).exists()  # pomijamy aktualnie edytowaną wizytę
+
+                if konflikt:
                     raise ValidationError(f"Weterynarz {weterynarz} ma już wizytę o tej godzinie. Wybierz inny termin.")
         
         return self.cleaned_data
 
 
 class NotatkaForm(forms.Form):
+    """Formularz notatki medycznej: dodawanie w trakcie realizacji wizyty"""
     notatka = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 4}),
         label=mark_safe("<strong style='display: block;'>Notatka medyczna:</strong>"),
@@ -141,6 +141,7 @@ class NotatkaForm(forms.Form):
 
 
 class ZwierzeForm(forms.ModelForm):
+    """Formularz zwierzaka: dodawanie lub edycja"""
     class Meta:
         model = Zwierze
         fields = ["imie", "gatunek", "plec", "data_urodzenia"]
