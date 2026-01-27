@@ -1,6 +1,6 @@
 {% extends "przychodnia/base.html" %}
 
-{% block title %}Twoje wizyty{% endblock %}
+{% block title %}Nadchodzące wizyty{% endblock %}
 
 {% block content %}
 {% if user.weterynarz %}<h2>Twoje nadchodzące wizyty:</h2>{% endif %}
@@ -50,7 +50,7 @@
             Dodaj nową wizytę
         </button>
     </form>
-    
+
     <form method="get" action="{% url 'historia-wizyt' %}" style="display: inline;">
         <button type="submit"
                 style="background-color: #2196F3; color: white; padding: 6px 12px; text-decoration: none; margin-left: 5px;">

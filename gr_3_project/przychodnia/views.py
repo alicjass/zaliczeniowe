@@ -74,7 +74,7 @@ def user_register_step2(request):
             
             if typ_uzytkownika == 'opiekun':
                 Opiekun.objects.create(**profil_data)
-                redirect_url = 'lista-wizyt'
+                redirect_url = 'przyszle-wizyty'
             else:
                 profil_data['specjalizacja'] = form.cleaned_data.get('specjalizacja', '')
                 Weterynarz.objects.create(**profil_data)
@@ -111,7 +111,7 @@ def user_login(request):
                 return redirect('dzisiejsze-wizyty')
             
             elif hasattr(user, 'opiekun'):
-                return redirect('lista-wizyt')
+                return redirect('przyszle-wizyty')
 
         else:
             return render(request, 'przychodnia/login.html', {'error': 'Nieprawidłowe dane'})
@@ -143,6 +143,7 @@ def user_profil(request):
         'weterynarz': weterynarz
     })
 
+
 # EDYCJA PROFILU UŻYTKOWNIKA
 @login_required
 def edytuj_profil(request):
@@ -167,9 +168,10 @@ def edytuj_profil(request):
     
     return render(request, 'przychodnia/user/edytuj_profil.html', {'form': form})
 
+
 # LISTA NADCHODZĄCYCH WIZYT DLA OPIEKUNA/WETERYNARZA
 @login_required
-def lista_wizyt(request):
+def przyszle_wizyty(request):
     user = request.user
 
     Wizyta.aktualizuj_przeterminowane_wizyty()
@@ -183,13 +185,13 @@ def lista_wizyt(request):
     elif hasattr(user, "weterynarz"):
         wizyty = Wizyta.objects.filter(
             weterynarz=user.weterynarz,
-            data_wizyty__gt=date.today()  # wyswietlamy tylko przyszle wizyty (dzisiejsze w oddzielnym widoku)
+            data_wizyty__gt=date.today()  # wszystkie statusy, ale tylko przyszle wizyty
         )
 
     else:
         return HttpResponseForbidden()
     
-    return render(request, 'przychodnia/wizyty/lista_wizyt.html', {'wizyty': wizyty})
+    return render(request, 'przychodnia/wizyty/przyszle_wizyty.html', {'wizyty': wizyty})
 
 
 # DZISIEJSZE WIZYTY WETERYNARZA
@@ -204,7 +206,7 @@ def dzisiejsze_wizyty(request):
 
     wizyty = Wizyta.objects.filter(
         weterynarz=user.weterynarz,
-        data_wizyty=date.today()
+        data_wizyty=date.today()  # wszystkie statusy, ale tylko dzisiejsze wizyty
     )
     
     return render(request, 'przychodnia/wizyty/dzisiejsze_wizyty.html', {'wizyty': wizyty})
@@ -270,7 +272,7 @@ def dodaj_wizyte(request):
         form = WizytaForm(request.POST, opiekun=user.opiekun)
         if form.is_valid():
             wizyta = form.save()
-            return redirect('lista-wizyt')
+            return redirect('przyszle-wizyty')
     else:
         form = WizytaForm(opiekun=user.opiekun)
 
@@ -309,7 +311,7 @@ def przeloz_wizyte(request, pk):
         form = WizytaForm(request.POST, instance=wizyta, opiekun=user.opiekun)
         if form.is_valid():
             wizyta = form.save()
-            return redirect("lista-wizyt")
+            return redirect("przyszle-wizyty")
     else:
         form = WizytaForm(instance=wizyta, opiekun=user.opiekun)
 
@@ -337,7 +339,7 @@ def odwolaj_wizyte(request, pk):
     if request.method == "POST":
         wizyta.status = STATUS_WIZYTA.Odwołana
         wizyta.save()
-        return redirect("lista-wizyt")
+        return redirect("przyszle-wizyty")
 
     return render(request, 'przychodnia/wizyty/odwolaj_wizyte.html', {'wizyta': wizyta})
 

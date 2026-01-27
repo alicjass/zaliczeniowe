@@ -16,7 +16,7 @@ urlpatterns = [
              success_url='/przychodnia/user/profil/'
          ), 
          name='zmien-haslo'),
-    path('wizyty/lista/', views.lista_wizyt, name='lista-wizyt'),
+    path('wizyty/przyszle/', views.przyszle_wizyty, name='przyszle-wizyty'),
     path('wizyty/dzisiejsze/', views.dzisiejsze_wizyty, name='dzisiejsze-wizyty'),
     path('wizyty/historia/', views.historia_wizyt, name='historia-wizyt'),
     path('wizyty/<int:pk>/', views.wizyta_detail, name='wizyta-detail'),
