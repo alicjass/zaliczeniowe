@@ -8,15 +8,46 @@
             .status-1 { color: green; font-weight: bold; }
             .status-2 { color: gray; font-weight: bold; }
             .status-3 { color: red; font-weight: bold; }
+            .nav-links {
+                background-color: #f0f0f0;
+                padding: 5px 15px;
+                border-radius: 5px;
+                display: inline-block;
+            }
+            .nav-links a {
+                font-weight: bold;
+                text-decoration: none;
+            }
+            .user-info {
+                font-size: 0.9em;
+                color: #666;
+            }
         </style>
     </head>
     <body>
         <div id="header" >
-            Przychodnia weterynaryjna
+            <div>
+                <strong>Przychodnia weterynaryjna</strong>
+                    |
+                {% if user.is_authenticated %}
+                    <span class="nav-links">
+                        {% if user.weterynarz %}
+                            <a href="{% url 'dzisiejsze-wizyty' %}">Wizyty</a>
+                        {% elif user.opiekun %}
+                            <a href="{% url 'przyszle-wizyty' %}">Wizyty</a>
+                        {% endif %}
+                        | <a href="{% url 'lista-zwierzat' %}">Zwierzęta</a>
+                        | <a href="{% url 'user-profil' %}">Twój profil</a>
+                    </span>
+                {% else %}
+                    <a href="{% url 'user-login' %}">Zaloguj</a>
+                {% endif %}
+            </div>
             {% if user.is_authenticated %}
-                <a href="{% url 'user-logout' %}">Wyloguj</a>
-            {% else %}
-                <a href="{% url 'user-login' %}">Zaloguj</a>
+                <div class="user-info">
+                    Zalogowano jako <strong>{% if user.weterynarz %}Weterynarz{% elif user.opiekun %}Opiekun{% endif %}</strong>
+                    | <a href="{% url 'user-logout' %}">Wyloguj</a>
+                </div>
             {% endif %}
         </div>
         <hr/>

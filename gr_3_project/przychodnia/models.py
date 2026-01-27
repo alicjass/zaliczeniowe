@@ -83,9 +83,6 @@ class Wizyta(models.Model):
     status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
     notatka = models.TextField(blank = True)
 
-    def __str__(self):
-        return f"{self.zwierze.imie}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (weterynarz: {self.weterynarz.nazwisko})"
-
     @classmethod  # metoda działająca na klasie, nie na obiekcie
     def aktualizuj_przeterminowane_wizyty(cls):
         """Zmienia status na "Odwołana" dla wizyt zaplanowanych, które minęły ponad 1h temu."""
@@ -95,6 +92,9 @@ class Wizyta(models.Model):
             if czas_wizyty + timedelta(hours=1) < datetime.now():
                 wizyta.status = STATUS_WIZYTA.Odwołana
                 wizyta.save()
+
+    def __str__(self):
+        return f"{self.zwierze.imie}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (weterynarz: {self.weterynarz.nazwisko})"
 
     class Meta:
         verbose_name_plural = "Wizyty"

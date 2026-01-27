@@ -12,18 +12,18 @@
         <th>Gatunek</th>
         <th>Płeć</th>
         {% if user.weterynarz %}<th>Opiekun</th>{% endif %}
+        <th>Akcje</th>
     </tr>
     {% for zwierze in zwierzeta %}
     <tr>
-        <td>
-            <a href="{% url 'zwierze-detail' pk=zwierze.pk %}">
-                {{ zwierze.imie }}
-            </a>
-        </td>
+        <td>{{ zwierze.imie }}</td>
         <td>{{ zwierze.get_gatunek_display }}</td>
         <td>{{ zwierze.get_plec_display }}</td>
         {% if user.weterynarz %}<td>{{ zwierze.opiekun.imie }} {{ zwierze.opiekun.nazwisko }}</td>{% endif %}
-    </tr>
+        <td>
+            <a href="{% url 'zwierze-detail' pk=zwierze.pk %}">Szczegóły</a>
+        </td>
+    </tr>    
     {% endfor %}
 </table>
 {% else %}

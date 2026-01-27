@@ -8,24 +8,20 @@
 	<strong>Godzina:</strong> {{ wizyta.godzina_wizyty|time:"H:i" }}
 </p>
 
-{% if wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
-	<form method="post">
-		{% csrf_token %}
-		<p>
-			{{ form.notatka.label }}
-			{{ form.notatka }}
-		</p>
-		<button type="submit"
-            style="background-color: green; color: white; padding: 6px 12px;">
-            Oznacz jako zrealizowaną
-        </button>
-		<a href="{% url 'wizyta-detail' pk=wizyta.pk %}"
-            style="margin-left: 10px;">
-			Anuluj
-		</a>
-	</form>
-{% else %}
-	<p>Brak możliwości realizacji tej wizyty.</p>
-{% endif %}
+<form method="post">
+	{% csrf_token %}
+	<p>
+		{{ form.notatka.label }}
+		{{ form.notatka }}
+	</p>
+	<button type="submit"
+        style="background-color: green; color: white; padding: 6px 12px;">
+        Oznacz jako zrealizowaną
+    </button>
+	<a href="{% url 'wizyta-detail' pk=wizyta.pk %}"
+        style="margin-left: 10px;">
+		Anuluj
+	</a>
+</form>
 <hr>
 {% endblock %}
