@@ -33,7 +33,7 @@
                     <span class="nav-links">
                         {% if user.weterynarz %}
                             <a href="{% url 'dzisiejsze-wizyty' %}">Wizyty</a>
-                        {% elif user.opiekun %}
+                        {% else %}
                             <a href="{% url 'przyszle-wizyty' %}">Wizyty</a>
                         {% endif %}
                         | <a href="{% url 'lista-zwierzat' %}">Zwierzęta</a>

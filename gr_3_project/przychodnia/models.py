@@ -24,6 +24,7 @@ STATUS_WIZYTA = models.IntegerChoices(
 
 
 class Opiekun(models.Model):
+    """Model opiekuna zwierzaka"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # polaczenie profilu opiekuna z kontem uzytkownika User
 
     imie = models.CharField(max_length = 50)
@@ -41,11 +42,12 @@ class Opiekun(models.Model):
 
 
 class Zwierze(models.Model):
+    """Model zwierzaka, którego opiekun umawia na wizyty"""
     imie = models.CharField(max_length = 50)
     opiekun = models.ForeignKey(Opiekun, on_delete = models.PROTECT)
     gatunek = models.IntegerField(choices = GATUNEK.choices)
     plec = models.IntegerField(choices = PLEC_ZWIERZE.choices)
-    data_urodzenia = models.DateField(blank = True, null = True)
+    data_urodzenia = models.DateField(blank = True, null = True)  # opcjonalnie
 
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
@@ -58,12 +60,13 @@ class Zwierze(models.Model):
 
 
 class Weterynarz(models.Model):
+    """Model weterynarza, który przeprowadza wizyty"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # polaczenie profilu weterynarza z kontem uzytkownika User
 
     imie = models.CharField(max_length = 50)
     nazwisko = models.CharField(max_length = 100)
     plec = models.IntegerField(choices = PLEC_OSOBA.choices, default = PLEC_OSOBA.Inna)
-    specjalizacja = models.CharField(max_length=100, blank=True)
+    specjalizacja = models.CharField(max_length=100, blank=True)  # opcjonalnie
     
     data_dodania = models.DateTimeField(auto_now_add = True, editable = False)
 
@@ -76,12 +79,13 @@ class Weterynarz(models.Model):
 
 
 class Wizyta(models.Model):
+    """Model wizyty weterynaryjnej"""
     zwierze = models.ForeignKey(Zwierze, on_delete = models.CASCADE)
     weterynarz = models.ForeignKey(Weterynarz, on_delete = models.PROTECT)
     data_wizyty = models.DateField()
     godzina_wizyty = models.TimeField()
     status = models.IntegerField(choices = STATUS_WIZYTA.choices, default = STATUS_WIZYTA.Zaplanowana)
-    notatka = models.TextField(blank = True)
+    notatka = models.TextField(blank = True)  # obowiązkowa dopiero po zrealizowaniu wizyty
 
     @classmethod  # metoda działająca na klasie, nie na obiekcie
     def aktualizuj_przeterminowane_wizyty(cls):
