@@ -34,15 +34,11 @@ def user_register_step1(request):
             }
             return redirect('user-register-step2')
     else:
-        # jesli dane są w sesji, wyswietlaja sie jako domyslne
-        registration_data = request.session.get('registration_data', {})
-        initial = {
-            'username': registration_data.get('username'),
-            'typ_uzytkownika': registration_data.get('typ_uzytkownika')
-        }
-        form = RegistrationForm(initial=initial)
+        # jesli dane są w sesji, to zapisujemy je jako wartosci poczatkowe
+        form = RegistrationForm(initial=request.session.get('registration_data', {}))
     
     return render(request, 'przychodnia/rejestracja_step1.html', {'form': form})
+
 
 # REJESTRACJA - KROK 2: uzupełnienie profilu i utworzenie konta 
 def user_register_step2(request):
@@ -76,13 +72,12 @@ def user_register_step2(request):
                 Opiekun.objects.create(**profil_data)
                 redirect_url = 'przyszle-wizyty'
             else:
-                profil_data['specjalizacja'] = form.cleaned_data.get('specjalizacja', '')
-                Weterynarz.objects.create(**profil_data)
+                Weterynarz.objects.create(**profil_data, specjalizacja=form.cleaned_data['specjalizacja'])
                 redirect_url = 'dzisiejsze-wizyty'
             
-            del request.session['registration_data']
+            del request.session['registration_data']  # usuwamy dane z sesji
             
-            # logujemy i przekierowujemy
+            # logujemy i przekierowujemy Usera
             login(request, user)
             return redirect(redirect_url)
     else:
@@ -128,19 +123,10 @@ def user_logout(request):
 def user_profil(request):
     user = request.user
     
-    opiekun = None
-    weterynarz = None
-    
-    if hasattr(user, 'opiekun'):
-        opiekun = user.opiekun
-        
-    elif hasattr(user, 'weterynarz'):
-        weterynarz = user.weterynarz
-    
     return render(request, 'przychodnia/user/user_profil.html', {
         'user': user,
-        'opiekun': opiekun,
-        'weterynarz': weterynarz
+        'opiekun': getattr(user, 'opiekun', None),
+        'weterynarz': getattr(user, 'weterynarz', None)
     })
 
 
@@ -148,14 +134,9 @@ def user_profil(request):
 @login_required
 def edytuj_profil(request):
     user = request.user
+    instance = getattr(user, 'opiekun', None) or getattr(user, 'weterynarz', None)
     
-    if hasattr(user, 'opiekun'):
-        instance = user.opiekun
-    
-    elif hasattr(user, 'weterynarz'):
-        instance = user.weterynarz
-    
-    else:
+    if not instance:
         return HttpResponse("Brak dostępu", status=403)
     
     if request.method == "POST":
@@ -178,13 +159,13 @@ def przyszle_wizyty(request):
 
     if hasattr(user, "opiekun"):
         wizyty = Wizyta.objects.filter(
-            zwierze__opiekun=user.opiekun,
+            zwierze__opiekun=user.opiekun,  # tylko wizyty zwierząt opiekuna
             status=STATUS_WIZYTA.Zaplanowana  # tylko zaplanowane wizyty
         )
 
     elif hasattr(user, "weterynarz"):
         wizyty = Wizyta.objects.filter(
-            weterynarz=user.weterynarz,
+            weterynarz=user.weterynarz,  # tylko wizyty weterynarza
             data_wizyty__gt=date.today()  # wszystkie statusy, ale tylko przyszle wizyty
         )
 
@@ -202,10 +183,10 @@ def dzisiejsze_wizyty(request):
     Wizyta.aktualizuj_przeterminowane_wizyty()
 
     if not hasattr(user, "weterynarz"):
-        return HttpResponseForbidden()
+        return HttpResponseForbidden()  # widok tylko dla weterynarza
 
     wizyty = Wizyta.objects.filter(
-        weterynarz=user.weterynarz,
+        weterynarz=user.weterynarz,  # tylko wizyty weterynarza
         data_wizyty=date.today()  # wszystkie statusy, ale tylko dzisiejsze wizyty
     )
     
@@ -219,13 +200,13 @@ def historia_wizyt(request):
 
     if hasattr(user, "opiekun"):
         wizyty = Wizyta.objects.filter(
-            zwierze__opiekun=user.opiekun,
+            zwierze__opiekun=user.opiekun,  # tylko wizyty zwierząt opiekuna
             status=STATUS_WIZYTA.Zrealizowana
         ).order_by('-data_wizyty', '-godzina_wizyty')
 
     elif hasattr(user, "weterynarz"):
         wizyty = Wizyta.objects.filter(
-            weterynarz=user.weterynarz,
+            weterynarz=user.weterynarz,  # tylko wizyty weterynarza
             status=STATUS_WIZYTA.Zrealizowana
         ).order_by('-data_wizyty', '-godzina_wizyty')
 
@@ -248,11 +229,11 @@ def wizyta_detail(request, pk):
         return HttpResponse("Wizyta nie istnieje", status=404)
 
     if hasattr(user, 'opiekun'):
-        if wizyta.zwierze.opiekun != user.opiekun:
+        if wizyta.zwierze.opiekun != user.opiekun:  # tylko wizyty zwierząt opiekuna
             return HttpResponse("Brak dostępu", status=403)
 
     elif hasattr(user, 'weterynarz'):
-        pass
+        pass  # weterynarz może zobaczyć szczegóły każdej wizyty
 
     else:
         return HttpResponse("Brak roli użytkownika", status=403)
@@ -265,7 +246,7 @@ def wizyta_detail(request, pk):
 def dodaj_wizyte(request):
     user = request.user
     
-    if not hasattr(user, 'opiekun'):
+    if not hasattr(user, 'opiekun'):  # tylko opiekun dodaje wizyty
         return HttpResponse("Brak dostępu", status=403)
 
     if request.method == "POST":
@@ -281,6 +262,7 @@ def dodaj_wizyte(request):
 
 # FUNKCJA POMOCNICZA -> sprawdzamy, czy wizytę można zmienić (przełożyć/odwołać)
 def sprawdz_czy_mozna_zmienic(user, wizyta):
+    # tylko opiekun przypisany do zwierzaka danej wizyty może ją zmienić
     if not hasattr(user, 'opiekun') or wizyta.zwierze.opiekun != user.opiekun:
         return False, HttpResponse("Brak dostępu", status=403)
     
@@ -354,6 +336,7 @@ def zrealizuj_wizyte(request, pk):
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
 
+    # tylko weterynarz przypisany do wizyty może ją zrealizować
     if not hasattr(user, 'weterynarz') or wizyta.weterynarz != user.weterynarz:
         return HttpResponse("Brak dostępu", status=403)
 
@@ -385,11 +368,11 @@ def lista_zwierzat(request):
 
     if hasattr(user, "opiekun"):
         zwierzeta = Zwierze.objects.filter(
-            opiekun=user.opiekun
+            opiekun=user.opiekun  # tylko zwierzęta opiekuna
         )
 
     elif hasattr(user, "weterynarz"):
-        zwierzeta = Zwierze.objects.all()
+        zwierzeta = Zwierze.objects.all()  # weterynarz widzi wszystkie zwierzęta
 
     else:
         return HttpResponseForbidden()
@@ -408,11 +391,11 @@ def zwierze_detail(request, pk):
         return HttpResponse("Zwierzę nie istnieje", status=404)
 
     if hasattr(user, 'opiekun'):
-        if zwierze.opiekun != user.opiekun:
+        if zwierze.opiekun != user.opiekun:  # tylko zwierzęta opiekuna
             return HttpResponse("Brak dostępu", status=403)
 
     elif hasattr(user, 'weterynarz'):
-        pass
+        pass  # weterynarz może zobaczyć szczegóły każdego zwierzaka
 
     else:
         return HttpResponse("Brak roli użytkownika", status=403)
@@ -431,11 +414,11 @@ def historia_zwierzaka(request, pk):
         return HttpResponse("Zwierzę nie istnieje", status=404)
 
     if hasattr(user, 'opiekun'):
-        if zwierze.opiekun != user.opiekun:
+        if zwierze.opiekun != user.opiekun:  # tylko zwierzęta opiekuna
             return HttpResponse("Brak dostępu", status=403)
 
     elif hasattr(user, 'weterynarz'):
-        pass
+        pass  # weterynarz może zobaczyć historię każdego zwierzaka
 
     else:
         return HttpResponse("Brak roli użytkownika", status=403)
@@ -453,7 +436,7 @@ def historia_zwierzaka(request, pk):
 def dodaj_zwierze(request):
     user = request.user
     
-    if not hasattr(user, 'opiekun'):
+    if not hasattr(user, 'opiekun'):  # tylko opiekun dodaje zwierzęta
         return HttpResponse("Brak dostępu", status=403)
 
     if request.method == "POST":
@@ -477,6 +460,7 @@ def edytuj_zwierze(request, pk):
     except Zwierze.DoesNotExist:
         return HttpResponse("Zwierzę nie istnieje", status=404)
 
+    # tylko opiekun może edytować swoje zwierzęta
     if not hasattr(user, 'opiekun') or zwierze.opiekun != user.opiekun:
         return HttpResponse("Brak dostępu", status=403)
     
