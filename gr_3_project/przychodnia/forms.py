@@ -92,7 +92,7 @@ class WizytaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.opiekun = kwargs.pop("opiekun")
+        self.opiekun = kwargs.pop("opiekun")  # zapamiętujemy opiekuna umawiającego wizytę
 
         # przy przekładaniu wizyty ustawiamy aktualną jej godzinę jako wartość domyślną
         instance = kwargs.get('instance')

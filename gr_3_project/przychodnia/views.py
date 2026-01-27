@@ -1,18 +1,20 @@
 from django import forms
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseForbidden
-from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Opiekun, Zwierze, Weterynarz, Wizyta, STATUS_WIZYTA
 from .forms import RegistrationForm, ProfilForm, WizytaForm, NotatkaForm, ZwierzeForm
+from .permissions import (
+    opiekun_required, weterynarz_required, opiekun_or_weterynarz_required,
+    sprawdz_dostep_do_zwierzecia, sprawdz_dostep_do_wizyty)
 from datetime import date, datetime
 
 
 # WELCOME VIEW
 def welcome_view(request):
-    now = datetime.datetime.now()
+    now = datetime.now()
     html = f"""
         <html><body>
         Witaj użytkowniku! </br>
@@ -34,7 +36,7 @@ def user_register_step1(request):
             }
             return redirect('user-register-step2')
     else:
-        # jesli dane są w sesji, to zapisujemy je jako wartosci poczatkowe
+        # jesli dane juz są w sesji, to zapisujemy je jako wartosci poczatkowe
         form = RegistrationForm(initial=request.session.get('registration_data', {}))
     
     return render(request, 'przychodnia/rejestracja_step1.html', {'form': form})
@@ -52,7 +54,7 @@ def user_register_step2(request):
     if request.method == "POST":
         form = ProfilForm(request.POST, typ_uzytkownika=typ_uzytkownika)
         if form.is_valid():
-            # tworzymy User
+            # tworzymy Usera
             user = User.objects.create_user(
                 username=registration_data['username'],
                 password=registration_data['password'],
@@ -132,12 +134,10 @@ def user_profil(request):
 
 # EDYCJA PROFILU UŻYTKOWNIKA
 @login_required
+@opiekun_or_weterynarz_required
 def edytuj_profil(request):
     user = request.user
     instance = getattr(user, 'opiekun', None) or getattr(user, 'weterynarz', None)
-    
-    if not instance:
-        return HttpResponse("Brak dostępu", status=403)
     
     if request.method == "POST":
         form = ProfilForm(request.POST, instance=instance)
@@ -152,6 +152,7 @@ def edytuj_profil(request):
 
 # LISTA NADCHODZĄCYCH WIZYT DLA OPIEKUNA/WETERYNARZA
 @login_required
+@opiekun_or_weterynarz_required
 def przyszle_wizyty(request):
     user = request.user
 
@@ -159,34 +160,29 @@ def przyszle_wizyty(request):
 
     if hasattr(user, "opiekun"):
         wizyty = Wizyta.objects.filter(
-            zwierze__opiekun=user.opiekun,  # tylko wizyty zwierząt opiekuna
+            zwierze__opiekun=user.opiekun,  # opiekun: tylko wizyty swoich zwierząt
             status=STATUS_WIZYTA.Zaplanowana  # tylko zaplanowane wizyty
         )
 
     elif hasattr(user, "weterynarz"):
         wizyty = Wizyta.objects.filter(
-            weterynarz=user.weterynarz,  # tylko wizyty weterynarza
+            weterynarz=user.weterynarz,  # weterynarz: tylko swoje wizyty
             data_wizyty__gt=date.today()  # wszystkie statusy, ale tylko przyszle wizyty
         )
-
-    else:
-        return HttpResponseForbidden()
     
     return render(request, 'przychodnia/wizyty/przyszle_wizyty.html', {'wizyty': wizyty})
 
 
 # DZISIEJSZE WIZYTY WETERYNARZA
 @login_required
+@weterynarz_required
 def dzisiejsze_wizyty(request):
     user = request.user
     
     Wizyta.aktualizuj_przeterminowane_wizyty()
 
-    if not hasattr(user, "weterynarz"):
-        return HttpResponseForbidden()  # widok tylko dla weterynarza
-
     wizyty = Wizyta.objects.filter(
-        weterynarz=user.weterynarz,  # tylko wizyty weterynarza
+        weterynarz=user.weterynarz,  # weterynarz: tylko swoje wizyty
         data_wizyty=date.today()  # wszystkie statusy, ale tylko dzisiejsze wizyty
     )
     
@@ -195,29 +191,28 @@ def dzisiejsze_wizyty(request):
 
 # HISTORIA WIZYT DLA OPIEKUNA/WETERYNARZA
 @login_required
+@opiekun_or_weterynarz_required
 def historia_wizyt(request):
     user = request.user
 
     if hasattr(user, "opiekun"):
         wizyty = Wizyta.objects.filter(
-            zwierze__opiekun=user.opiekun,  # tylko wizyty zwierząt opiekuna
+            zwierze__opiekun=user.opiekun,  # opiekun: tylko zrealizowane wizyty swoich zwierząt
             status=STATUS_WIZYTA.Zrealizowana
         ).order_by('-data_wizyty', '-godzina_wizyty')
 
     elif hasattr(user, "weterynarz"):
         wizyty = Wizyta.objects.filter(
-            weterynarz=user.weterynarz,  # tylko wizyty weterynarza
+            weterynarz=user.weterynarz,  # weterynarz: tylko swoje zrealizowane wizyty
             status=STATUS_WIZYTA.Zrealizowana
         ).order_by('-data_wizyty', '-godzina_wizyty')
-
-    else:
-        return HttpResponseForbidden()
     
     return render(request, 'przychodnia/wizyty/historia_wizyt.html', {'wizyty': wizyty})
 
 
 # SZCZEGÓŁY WIZYTY
 @login_required
+@opiekun_or_weterynarz_required
 def wizyta_detail(request, pk):
     user = request.user
     
@@ -228,26 +223,18 @@ def wizyta_detail(request, pk):
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
 
-    if hasattr(user, 'opiekun'):
-        if wizyta.zwierze.opiekun != user.opiekun:  # tylko wizyty zwierząt opiekuna
-            return HttpResponse("Brak dostępu", status=403)
-
-    elif hasattr(user, 'weterynarz'):
-        pass  # weterynarz może zobaczyć szczegóły każdej wizyty
-
-    else:
-        return HttpResponse("Brak roli użytkownika", status=403)
+    is_valid, error_response = sprawdz_dostep_do_wizyty(user, wizyta)
+    if not is_valid:
+        return error_response
 
     return render(request, 'przychodnia/wizyty/wizyta_detail.html', {'wizyta': wizyta})
 
 
 # DODAWANIE WIZYTY PRZEZ OPIEKUNA
 @login_required
+@opiekun_required
 def dodaj_wizyte(request):
     user = request.user
-    
-    if not hasattr(user, 'opiekun'):  # tylko opiekun dodaje wizyty
-        return HttpResponse("Brak dostępu", status=403)
 
     if request.method == "POST":
         form = WizytaForm(request.POST, opiekun=user.opiekun)
@@ -262,9 +249,10 @@ def dodaj_wizyte(request):
 
 # FUNKCJA POMOCNICZA -> sprawdzamy, czy wizytę można zmienić (przełożyć/odwołać)
 def sprawdz_czy_mozna_zmienic(user, wizyta):
-    # tylko opiekun przypisany do zwierzaka danej wizyty może ją zmienić
-    if not hasattr(user, 'opiekun') or wizyta.zwierze.opiekun != user.opiekun:
-        return False, HttpResponse("Brak dostępu", status=403)
+
+    is_valid, error_response = sprawdz_dostep_do_wizyty(user, wizyta)
+    if not is_valid:
+        return False, error_response
     
     if wizyta.status != STATUS_WIZYTA.Zaplanowana:
         return False, HttpResponseForbidden("Ta wizyta już się odbyła lub została odwołana.")
@@ -277,6 +265,7 @@ def sprawdz_czy_mozna_zmienic(user, wizyta):
 
 # PRZEŁOŻENIE WIZYTY PRZEZ OPIEKUNA
 @login_required
+@opiekun_required
 def przeloz_wizyte(request, pk):
     user = request.user
     
@@ -306,6 +295,7 @@ def przeloz_wizyte(request, pk):
 
 # ODWOŁANIE WIZYTY PRZEZ OPIEKUNA
 @login_required
+@opiekun_required
 def odwolaj_wizyte(request, pk):
     user = request.user
     
@@ -328,6 +318,7 @@ def odwolaj_wizyte(request, pk):
 
 # REALIZACJA WIZYTY PRZEZ WETERYNARZA
 @login_required
+@weterynarz_required
 def zrealizuj_wizyte(request, pk):
     user = request.user
     
@@ -335,10 +326,9 @@ def zrealizuj_wizyte(request, pk):
         wizyta = Wizyta.objects.get(id=pk)
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
-
-    # tylko weterynarz przypisany do wizyty może ją zrealizować
-    if not hasattr(user, 'weterynarz') or wizyta.weterynarz != user.weterynarz:
-        return HttpResponse("Brak dostępu", status=403)
+    
+    if wizyta.weterynarz != user.weterynarz:  # tylko weterynarz przypisany do wizyty może ją zrealizować
+        return HttpResponseForbidden("Brak dostępu")
 
     if wizyta.status != STATUS_WIZYTA.Zaplanowana:
         return HttpResponseForbidden("Ta wizyta już się odbyła lub została odwołana.")
@@ -363,25 +353,24 @@ def zrealizuj_wizyte(request, pk):
 
 # LISTA ZWIERZĄT DLA OPIEKUNA/WETERYNARZA
 @login_required
+@opiekun_or_weterynarz_required
 def lista_zwierzat(request):
     user = request.user
 
     if hasattr(user, "opiekun"):
         zwierzeta = Zwierze.objects.filter(
-            opiekun=user.opiekun  # tylko zwierzęta opiekuna
+            opiekun=user.opiekun  # opiekun: tylko swoje zwierzęta
         )
 
     elif hasattr(user, "weterynarz"):
-        zwierzeta = Zwierze.objects.all()  # weterynarz widzi wszystkie zwierzęta
-
-    else:
-        return HttpResponseForbidden()
+        zwierzeta = Zwierze.objects.all()  # weterynarz: wszystkie zwierzęta
     
     return render(request, 'przychodnia/zwierzeta/lista_zwierzat.html', {'zwierzeta': zwierzeta})
 
 
 # SZCZEGÓŁY ZWIERZAKA
 @login_required
+@opiekun_or_weterynarz_required
 def zwierze_detail(request, pk):
     user = request.user
     
@@ -390,21 +379,16 @@ def zwierze_detail(request, pk):
     except Zwierze.DoesNotExist:
         return HttpResponse("Zwierzę nie istnieje", status=404)
 
-    if hasattr(user, 'opiekun'):
-        if zwierze.opiekun != user.opiekun:  # tylko zwierzęta opiekuna
-            return HttpResponse("Brak dostępu", status=403)
-
-    elif hasattr(user, 'weterynarz'):
-        pass  # weterynarz może zobaczyć szczegóły każdego zwierzaka
-
-    else:
-        return HttpResponse("Brak roli użytkownika", status=403)
+    is_valid, error_response = sprawdz_dostep_do_zwierzecia(user, zwierze)
+    if not is_valid:
+        return error_response
 
     return render(request, 'przychodnia/zwierzeta/zwierze_detail.html', {'zwierze': zwierze})
 
 
 # HISTORIA WIZYT ZWIERZAKA
 @login_required
+@opiekun_or_weterynarz_required
 def historia_zwierzaka(request, pk):
     user = request.user
     
@@ -413,15 +397,9 @@ def historia_zwierzaka(request, pk):
     except Zwierze.DoesNotExist:
         return HttpResponse("Zwierzę nie istnieje", status=404)
 
-    if hasattr(user, 'opiekun'):
-        if zwierze.opiekun != user.opiekun:  # tylko zwierzęta opiekuna
-            return HttpResponse("Brak dostępu", status=403)
-
-    elif hasattr(user, 'weterynarz'):
-        pass  # weterynarz może zobaczyć historię każdego zwierzaka
-
-    else:
-        return HttpResponse("Brak roli użytkownika", status=403)
+    is_valid, error_response = sprawdz_dostep_do_zwierzecia(user, zwierze)
+    if not is_valid:
+        return error_response
 
     wizyty = Wizyta.objects.filter(
         zwierze=zwierze,
@@ -433,11 +411,9 @@ def historia_zwierzaka(request, pk):
 
 # DODAWANIE ZWIERZAKA PRZEZ OPIEKUNA
 @login_required
+@opiekun_required
 def dodaj_zwierze(request):
     user = request.user
-    
-    if not hasattr(user, 'opiekun'):  # tylko opiekun dodaje zwierzęta
-        return HttpResponse("Brak dostępu", status=403)
 
     if request.method == "POST":
         form = ZwierzeForm(request.POST, opiekun=user.opiekun)
@@ -452,6 +428,7 @@ def dodaj_zwierze(request):
 
 # EDYCJA ZWIERZAKA PRZEZ OPIEKUNA
 @login_required
+@opiekun_required
 def edytuj_zwierze(request, pk):
     user = request.user
     
@@ -460,9 +437,9 @@ def edytuj_zwierze(request, pk):
     except Zwierze.DoesNotExist:
         return HttpResponse("Zwierzę nie istnieje", status=404)
 
-    # tylko opiekun może edytować swoje zwierzęta
-    if not hasattr(user, 'opiekun') or zwierze.opiekun != user.opiekun:
-        return HttpResponse("Brak dostępu", status=403)
+    is_valid, error_response = sprawdz_dostep_do_zwierzecia(user, zwierze)
+    if not is_valid:
+        return error_response
     
     if request.method == "POST":
         form = ZwierzeForm(request.POST, instance=zwierze, opiekun=user.opiekun)
