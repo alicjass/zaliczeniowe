@@ -121,11 +121,24 @@ class WizytaForm(forms.ModelForm):
                 konflikt = Wizyta.objects.filter(
                     weterynarz=weterynarz,
                     data_wizyty=data_wizyty,
-                    godzina_wizyty=godzina_wizyty
+                    godzina_wizyty=godzina_wizyty,
+                    status=1
                 ).exclude(pk=self.instance.pk).exists()  # pomijamy aktualnie edytowaną wizytę
 
                 if konflikt:
                     raise ValidationError(f"Weterynarz {weterynarz} ma już wizytę o tej godzinie. Wybierz inny termin.")
+            
+            # sprawdzamy, czy opiekun nie ma w tym terminie wizyty u innego lekarza
+            if self.opiekun:
+                konflikt_opiekun = Wizyta.objects.filter(
+                    zwierze__opiekun=self.opiekun,
+                    data_wizyty=data_wizyty,
+                    godzina_wizyty=godzina_wizyty,
+                    status=1
+                ).exclude(pk=self.instance.pk).exists()
+
+                if konflikt_opiekun:
+                    raise ValidationError("Masz już zaplanowaną wizytę w tym terminie u innego lekarza. Wybierz inny termin.")
         
         return self.cleaned_data
 

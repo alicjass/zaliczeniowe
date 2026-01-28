@@ -44,7 +44,7 @@ class Opiekun(models.Model):
 class Zwierze(models.Model):
     """Model zwierzaka, którego opiekun umawia na wizyty"""
     imie = models.CharField(max_length = 50)
-    opiekun = models.ForeignKey(Opiekun, on_delete = models.PROTECT)
+    opiekun = models.ForeignKey(Opiekun, on_delete = models.CASCADE)
     gatunek = models.IntegerField(choices = GATUNEK.choices)
     plec = models.IntegerField(choices = PLEC_ZWIERZE.choices)
     data_urodzenia = models.DateField(blank = True, null = True)  # opcjonalnie
