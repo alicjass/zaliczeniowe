@@ -40,6 +40,11 @@ class Opiekun(models.Model):
         verbose_name_plural = "Opiekunowie"
         ordering = ['nazwisko', 'imie']
 
+    def delete(self, *args, **kwargs):  # jesli usuniemy profil opiekuna, usunie sie tez powiazany User
+        user = self.user
+        super().delete(*args, **kwargs)
+        user.delete()
+
 
 class Zwierze(models.Model):
     """Model zwierzaka, którego opiekun umawia na wizyty"""
@@ -76,6 +81,11 @@ class Weterynarz(models.Model):
     class Meta:
         verbose_name_plural = "Weterynarze"
         ordering = ['nazwisko', 'imie']
+
+    def delete(self, *args, **kwargs):  # jesli usuniemy profil weterynarza, usunie sie tez powiazany User
+        user = self.user
+        super().delete(*args, **kwargs)
+        user.delete()
 
 
 class Wizyta(models.Model):
