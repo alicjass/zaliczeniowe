@@ -29,4 +29,5 @@ urlpatterns = [
     path('zwierzeta/<int:pk>/historia/', views.historia_zwierzaka, name='historia-zwierzaka'),
     path('zwierzeta/dodaj/', views.dodaj_zwierze, name='dodaj-zwierze'),
     path('zwierzeta/<int:pk>/edytuj/', views.edytuj_zwierze, name='edytuj-zwierze'),
+    path('zwierzeta/<int:pk>/usun/', views.usun_zwierze, name='usun-zwierze'),
 ]

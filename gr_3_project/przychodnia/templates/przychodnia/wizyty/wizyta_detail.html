@@ -4,10 +4,15 @@
 
 {% block content %}
 <h2>Szczegóły wizyty:</h2>
-<p><strong>Pacjent:</strong> <a href="{% url 'zwierze-detail' pk=wizyta.zwierze.pk %}">
+{% if wizyta.zwierze %}
+    <p><strong>Pacjent:</strong> <a href="{% url 'zwierze-detail' pk=wizyta.zwierze.pk %}">
             {{ wizyta.zwierze.imie }}</a></p>
 
-{% if user.weterynarz %}<p><strong>Opiekun:</strong> {{ wizyta.zwierze.opiekun }}</p>{% endif %}
+    {% if user.weterynarz %}<p><strong>Opiekun:</strong> {{ wizyta.zwierze.opiekun }}</p>{% endif %}
+
+{% else %}
+<p><strong>Pacjent:</strong> <span style="color: gray;">[Usunięte zwierzę]</span></p>
+{% endif %}
 
 <p><strong>Data:</strong> {{ wizyta.data_wizyty|date:"d.m.Y" }}</p>
 <p><strong>Godzina:</strong> {{ wizyta.godzina_wizyty|time:"H:i" }}</p>
@@ -26,15 +31,10 @@
 </p>
 
 {% if wizyta.status == 2 %}
-<p><strong>Notatka:</strong>
-    {% if wizyta.notatka %}
-        {{ wizyta.notatka }}
-    {% else %}
-        brak
-    {% endif %}</p>
+<p><strong>Notatka:</strong> {{ wizyta.notatka }}</p>
 {% endif %}
 
-{% if wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
+{% if wizyta.zwierze and wizyta.weterynarz == user.weterynarz and wizyta.status == 1 %}
     <form method="get" action="{% url 'zrealizuj-wizyte' pk=wizyta.pk %}">
         <button type="submit"
             style="background-color: green; color: white; padding: 6px 12px;">
@@ -43,7 +43,7 @@
     </form>
 {% endif %}
 
-{% if wizyta.zwierze.opiekun == user.opiekun and wizyta.status == 1 %}
+{% if wizyta.zwierze and wizyta.zwierze.opiekun == user.opiekun and wizyta.status == 1 %}
     <form method="get" action="{% url 'przeloz-wizyte' pk=wizyta.pk %}" style="display: inline;">
         <button type="submit"
                 style="background-color: orange; color: white; padding: 6px 12px;">

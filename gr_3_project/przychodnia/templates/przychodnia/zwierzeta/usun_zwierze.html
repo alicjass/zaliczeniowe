@@ -1,0 +1,29 @@
+{% extends "przychodnia/base.html" %}
+
+{% block title %}Usuń zwierzaka{% endblock %}
+
+{% block content %}
+<h2>Usuwanie zwierzaka:</h2>
+
+<p>
+    Czy na pewno chcesz usunąć zwierzaka <strong>{{ zwierze.imie }}</strong>?
+</p>
+
+<p style="color: red">
+    <strong>Uwaga:</strong> Ta operacja jest <strong>nieodwracalna</strong>!
+{% if liczba_wizyt > 0 %}
+Po usunięciu zwierzaka jego zaplanowane wizyty zostaną <strong>odwołane</strong>.
+{% endif %}
+</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" style="background-color: red; color: white; padding: 6px 12px;">
+        Tak, usuń zwierzaka
+    </button>
+    <a href="{% url 'zwierze-detail' pk=zwierze.pk %}" style="margin-left: 10px;">
+        Anuluj
+    </a>
+</form>
+<hr>
+{% endblock %}

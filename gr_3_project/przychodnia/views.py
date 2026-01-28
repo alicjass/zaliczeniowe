@@ -236,6 +236,9 @@ def wizyta_detail(request, pk):
 def dodaj_wizyte(request):
     user = request.user
 
+    if user.opiekun.zwierze_set.count() == 0:
+        return HttpResponseForbidden("Nie można dodać wizyty, ponieważ nie masz żadnego zarejestrowanego zwierzaka.")
+
     if request.method == "POST":
         form = WizytaForm(request.POST, opiekun=user.opiekun)
         if form.is_valid():
@@ -327,8 +330,8 @@ def zrealizuj_wizyte(request, pk):
     except Wizyta.DoesNotExist:
         return HttpResponse("Wizyta nie istnieje", status=404)
     
-    if wizyta.weterynarz != user.weterynarz:  # tylko weterynarz przypisany do wizyty może ją zrealizować
-        return HttpResponseForbidden("Brak dostępu")
+    if wizyta.weterynarz != user.weterynarz:
+        return HttpResponseForbidden("Tylko weterynarz przypisany do wizyty może ją zrealizować.")
 
     if wizyta.status != STATUS_WIZYTA.Zaplanowana:
         return HttpResponseForbidden("Ta wizyta już się odbyła lub została odwołana.")
@@ -450,3 +453,35 @@ def edytuj_zwierze(request, pk):
         form = ZwierzeForm(instance=zwierze, opiekun=user.opiekun)
 
     return render(request, 'przychodnia/zwierzeta/edytuj_zwierze.html', {'zwierze': zwierze, 'form': form})
+
+
+# USUWANIE ZWIERZAKA PRZEZ OPIEKUNA
+@login_required
+@opiekun_required
+def usun_zwierze(request, pk):
+    user = request.user
+    
+    try:
+        zwierze = Zwierze.objects.get(id=pk)
+    except Zwierze.DoesNotExist:
+        return HttpResponse("Zwierzę nie istnieje", status=404)
+
+    is_valid, error_response = sprawdz_dostep_do_zwierzecia(user, zwierze)
+    if not is_valid:
+        return error_response
+    
+    wizyty_zaplanowane = Wizyta.objects.filter(zwierze=zwierze, status=STATUS_WIZYTA.Zaplanowana)
+    liczba_wizyt = wizyty_zaplanowane.count()
+    
+    if request.method == "POST":
+        for wizyta in wizyty_zaplanowane:
+            wizyta.status = STATUS_WIZYTA.Odwołana  # odwołujemy zaplanowane wizyty zwierzaka
+            wizyta.save()
+        
+        zwierze.delete()
+        return redirect("lista-zwierzat")
+    
+    return render(request, 'przychodnia/zwierzeta/usun_zwierze.html', {
+        'zwierze': zwierze,
+        'liczba_wizyt': liczba_wizyt
+    })

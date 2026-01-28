@@ -80,7 +80,7 @@ class Weterynarz(models.Model):
 
 class Wizyta(models.Model):
     """Model wizyty weterynaryjnej"""
-    zwierze = models.ForeignKey(Zwierze, on_delete = models.CASCADE)
+    zwierze = models.ForeignKey(Zwierze, on_delete = models.SET_NULL, null=True)
     weterynarz = models.ForeignKey(Weterynarz, on_delete = models.PROTECT)
     data_wizyty = models.DateField()
     godzina_wizyty = models.TimeField()
@@ -98,7 +98,8 @@ class Wizyta(models.Model):
                 wizyta.save()
 
     def __str__(self):
-        return f"{self.zwierze.imie}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (weterynarz: {self.weterynarz.nazwisko})"
+        zwierze_nazwa = self.zwierze.imie if self.zwierze else "[Usunięte zwierzę]"
+        return f"{zwierze_nazwa}: {self.data_wizyty.strftime('%d.%m.%Y')} {self.godzina_wizyty.strftime('%H:%M')} (weterynarz: {self.weterynarz.nazwisko})"
 
     class Meta:
         verbose_name_plural = "Wizyty"
